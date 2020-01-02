@@ -1,5 +1,6 @@
 # Things I added
 testFiles/
+.DS_store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
