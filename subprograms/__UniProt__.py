@@ -43,10 +43,17 @@ def cys_function(record, position):
 
     for feature in record.features:
 
-        if feature[0].upper() == 'DISULFID' and str(feature[1])[0] != '?' and str(feature[2])[0] != '?' and int(position) >= int(feature[1]) and int(position) <= int(feature[2]):
+        if feature[0].upper() == 'DISULFID' and \
+           str(feature[1])[0] != '?' and str(feature[2])[0] != '?' and \
+           int(position) >= int(feature[1]) and int(position) <= int(feature[2]):
             cys_function += (feature[0] + '--' + feature[3] + ' || ')
-        elif feature[0].upper() in features_list and str(feature[1])[0] != '?' and str(feature[2])[0] != '?' and (int(feature[2]) - int(feature[1])) <= 10 and int(position) >= int(feature[1]) and int(position) <= int(feature[2]):
+
+        elif feature[0].upper() in features_list and \
+             str(feature[1])[0] != '?' and str(feature[2])[0] != '?' and \
+             (int(feature[2]) - int(feature[1])) <= 10 and \
+             int(position) >= int(feature[1]) and int(position) <= int(feature[2]):
             cys_function += (feature[0] + '--' + feature[3] + ' || ')
+
     return cys_function
 
 def ExPasy(id, sequence, location):
