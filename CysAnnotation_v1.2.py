@@ -41,7 +41,7 @@ if sys.argv[2].lower() == 'cimage':
             header.append(line)
 
         elif line['index'].strip() != '':  # create peptide lines (no protein information - includes overall ratio)
-            index = line['index'].strip() 
+            index = line['index'].strip()
             peptides.append(line)
 
         else:
@@ -49,7 +49,7 @@ if sys.argv[2].lower() == 'cimage':
             proteins.append(line)
 
             # Get and Parse Uniprot entry for protein
-            UniProt_data = __UniProt__.ExPasy(line['id'], 
+            UniProt_data = __UniProt__.ExPasy(line['id'],
                                               line['sequence'].split('.')[1].split('*')[0] +
                                               line['sequence'].split('.')[1].split('*')[1],
                                               line['sequence'].split('.')[1].find('*'))
@@ -58,18 +58,18 @@ if sys.argv[2].lower() == 'cimage':
             line['cys_function'] = UniProt_data[2] # cysteine function (if known)
             line['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
 
-            # write full protein sequence to file for blast analysis 
+            # write full protein sequence to file for blast analysis
             f_seq = open(path + 'sequence.txt', 'w')
             f_seq.write('>sp|' + line['id'] + '|' + line['description'] + '\n' + UniProt_data[3])
             f_seq.close()
-            
+
             # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
             for organism in organism_list:
                 __Blast__.blastp(organism, path)
                 __Alignments__.align_write(path, organism)
                 alignment_values = __Alignments__.Align_file_parse(line['position'], path)
                 line[str(organism) + '_conserved'] = alignment_values[2]
-                
+
                 # for comparative organism analyze Uniprot entry of best blast hit
                 if organism == sys.argv[3].lower():
                     if alignment_values[0] != '':
@@ -91,13 +91,13 @@ if sys.argv[2].lower() == 'cimage':
                         line[sys.argv[3] + '_function'] = ''
                 else:
                     pass
-                    
+
 
 
 elif sys.argv[2].lower() == 'dtaselect':
     line = __MSParser__.dtaselect(item, organism_list)
-else: 
-    print "What type of file are you searching: cimage or dtaselect?"
+else:
+    print("What type of file are you searching: cimage or dtaselect?")
 
 # file output
 output = open(path + 'Cysteine_annotation.txt', 'w')

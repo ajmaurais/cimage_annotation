@@ -3,9 +3,8 @@
 import sys
 import os
 import os.path
-import urllib,urllib2
-import httplib
-sys.path.insert(0, 'biopython-1.65')
+from urllib.error import URLError, HTTPError
+from http.client import BadStatusLine
 
 from Bio import ExPASy, SwissProt, SeqIO
 
@@ -28,7 +27,7 @@ def protein_location(record):
             pass
     return str(pro_location)
 
-    
+
 def cys_position(record, sequence, location):
     peptide_location = str(record.sequence).find(sequence)
     if str(peptide_location) == str(-1):
@@ -62,10 +61,10 @@ def ExPasy(id, sequence, location):
             record = SwissProt.read(handle)
         except ValueError:
             record = None
-    except (urllib2.HTTPError, httplib.BadStatusLine, urllib2.URLError), err:
-        print err
-	record = None
-        
+    except (HTTPError, BadStatusLine, URLError) as err:
+        print(err)
+        record = None
+
     if record is not None:
         organism = record.organism
         pro_location = protein_location(record)
@@ -86,9 +85,9 @@ def ExPasy_alt(id, position):
             record = SwissProt.read(handle)
         except ValueError:
             record = None
-    except (urllib2.HTTPError, httplib.BadStatusLine, urllib2.URLError), err:
-        print err
-	record = None
+    except (HTTPError, BadStatusLine, URLError) as err:
+        print(err)
+        record = None
 
     if record is not None:
         protein = record.description

@@ -28,7 +28,7 @@ def cimage(line, organism_list, defined_organism):
         line_dict[defined_organism + '_function'] = defined_organism + '_function'
         for organism in organism_list:
             line_dict[organism + '_conserved'] = organism + '_conserved'
-        
+
 
     else:
         line_dict['protein_location'] = ''
@@ -42,14 +42,14 @@ def cimage(line, organism_list, defined_organism):
         for organism in organism_list:
             line_dict[organism + '_conserved'] = ''
 
-    return line_dict    
+    return line_dict
 
 def dtaselect(line, organism_list):
     line_dict = ''
     return line_dict
 
 def output(line_dict, organism_list, defined_organism):
-    print len(line_dict)
+    print(len(line_dict))
     line = ''
     line = (line_dict['index'] + '\t')
     line += (line_dict['id'] + '\t')
@@ -71,7 +71,7 @@ def output(line_dict, organism_list, defined_organism):
 
     n = 1
     while n < (len(line_dict) - 19):
-        print line_dict[n]
+        print(line_dict[n])
         line += (line_dict[n] + '\t')
         n += 1
     line = line.rstrip('\t')
