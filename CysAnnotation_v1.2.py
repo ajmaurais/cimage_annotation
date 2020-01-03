@@ -47,7 +47,8 @@ if sys.argv[2].lower() == 'cimage':
         else:
             line['index'] = index # create protein lines
             proteins.append(line)
-
+            
+            sys.stdout.write('Working on {}\n'.format(line['id']))
             # Get and Parse Uniprot entry for protein
             UniProt_data = __UniProt__.ExPasy(line['id'],
                                               line['sequence'].split('.')[1].split('*')[0] +
