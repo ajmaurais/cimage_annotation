@@ -1,6 +1,9 @@
 #! usr/bin/env/ python
 
 import sys
+import re
+
+UNIPROT_RE = '[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}'
 
 def align_write(path, organism):
     f = open(path + organism + '_alignments.txt', 'a')
@@ -30,15 +33,19 @@ def Align_file_parse(position, path):
         else:
             aligned_proteins = align_header.split('\n')
 
-            id = aligned_proteins[0].split('|')[1]
-            evalue = aligned_proteins[0].strip().split(' ')[-1]
-        
+            r = '^([ts][rp]\|){0,1}(' + UNIPROT_RE + ').*\s+([\d\.\-e]+)\s*$'
+            match = re.search(r, aligned_proteins[0])
+            if not match:
+                raise RuntimeError('Failed to parse aligned_proteins!\n\tFailed on value: {}'.format(aligned_proteins[0]))
+            id = match.group(2)
+            evalue = match.group(4)
+
             if float(evalue) > float('1e-5'):
                 conserved = '--'
             else:
-            
+
                 align_data = align.split('>')[1].split('\n\n\n')[0].split('\n\n')
-            
+
                 for item in align_data:
                     if item[:5] == 'Query':
                         query = item.split('\n')[0].split()
