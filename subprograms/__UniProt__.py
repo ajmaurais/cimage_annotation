@@ -46,13 +46,13 @@ def cys_function(record, position):
         if feature.type.upper() == 'DISULFID' and \
            str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
            int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
-            cys_function += (feature.type + '--' + feature.qualifiers + ' || ')
+            cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
 
         elif feature.type.upper() in features_list and \
              str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
              (int(feature.location.end) - int(feature.location.start)) <= 10 and \
              int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
-            cys_function += (feature.type + '--' + str(feature.qualifiers) + ' || ')
+            cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
 
     return cys_function
 
