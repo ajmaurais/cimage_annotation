@@ -43,16 +43,16 @@ def cys_function(record, position):
 
     for feature in record.features:
 
-        if feature[0].upper() == 'DISULFID' and \
-           str(feature[1])[0] != '?' and str(feature[2])[0] != '?' and \
-           int(position) >= int(feature[1]) and int(position) <= int(feature[2]):
-            cys_function += (feature[0] + '--' + feature[3] + ' || ')
+        if feature.type.upper() == 'DISULFID' and \
+           str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
+           int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
+            cys_function += (feature.type + '--' + feature.qualifiers + ' || ')
 
-        elif feature[0].upper() in features_list and \
-             str(feature[1])[0] != '?' and str(feature[2])[0] != '?' and \
-             (int(feature[2]) - int(feature[1])) <= 10 and \
-             int(position) >= int(feature[1]) and int(position) <= int(feature[2]):
-            cys_function += (feature[0] + '--' + feature[3] + ' || ')
+        elif feature.type.upper() in features_list and \
+             str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
+             (int(feature.location.end) - int(feature.location.start)) <= 10 and \
+             int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
+            cys_function += (feature.type + '--' + feature.qualifiers + ' || ')
 
     return cys_function
 
