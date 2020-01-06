@@ -34,7 +34,7 @@ def make_request(uniprot_id, n_retry = 10):
         try:
             handle = ExPASy.get_sprot_raw(uniprot_id)
         except (HTTPError, BadStatusLine, URLError) as err:
-            sys.stderr.write('Retry {} of {} for {}\n'.format(i, nRetry, uniprot_id))
+            sys.stderr.write('Retry {} of {} for {}\n'.format(i, n_iter, uniprot_id))
             continue
 
     return handle
