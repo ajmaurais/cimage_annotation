@@ -33,7 +33,14 @@ def make_request(uniprot_id, n_retry = 10):
     for i in range(n_iter):
         try:
             handle = ExPASy.get_sprot_raw(uniprot_id)
-        except (HTTPError, BadStatusLine, URLError) as e:
+        except HTTPError as e:
+            if e.getcode() >= 400:
+                sys.stderr.write('No UniProt page found for {}\n\tStatus code: {}\n'.format(uniprot_id, e.getcode()))
+                break
+            else:
+                sys.stderr.write('Retry {} of {} for {}\n\t{}'.format(i, n_iter, uniprot_id, e))
+                continue
+        except (BadStatusLine, URLError) as e:
             sys.stderr.write('Retry {} of {} for {}\n\t{}'.format(i, n_iter, uniprot_id, e))
             continue
 
@@ -80,7 +87,7 @@ def cys_function(record, position):
                  int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
                 cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
         except TypeError as e:
-            continue 
+            continue
 
     return cys_function
 

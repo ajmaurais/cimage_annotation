@@ -63,7 +63,7 @@ def main():
     file_input = parse_input(args.input_file, args.file_type, args.defined_organism)
 
     # Determine path for file output
-    path = '{}/'.format(os.path.dirname(args.input_file))
+    path = '{}/'.format(os.path.abspath(os.path.dirname(args.input_file)))
 
     header = []
     peptides = []
