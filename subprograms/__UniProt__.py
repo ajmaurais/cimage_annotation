@@ -14,6 +14,32 @@ features_list =['CA_BIND', 'ZN_FING', 'DNA_BIND', 'NP_BIND',
                  'DISULFID', 'CROSSLINK', 'VARIANT', 'MUTAGEN',
                  'UNSURE', 'CONFLICT', 'REGION']
 
+
+def make_request(uniprot_id, n_retry = 10):
+    '''
+    ExPASy get_sprot_raw wrapper to make retries if an http error occurs.
+
+    Paramaters
+    ----------
+    uniprot_id: str
+        Uniprot ID to retreive.
+
+    n_retry: int
+        Number of times to retry request if an error occurs
+    '''
+
+    n_iter = n_retry if n_retry > 0 else 1
+    handle = None
+    for i in range(n_iter):
+        try:
+            handle = ExPASy.get_sprot_raw(uniprot_id)
+        except (HTTPError, BadStatusLine, URLError) as err:
+            sys.stderr.write('Retry {} of {} for {}\n'.format(i, nRetry, uniprot_id))
+            continue
+
+    return handle
+
+
 def protein_location(record):
     pro_location = ''
     for item in record.comments:
@@ -65,17 +91,10 @@ def ExPasy(id, sequence, location):
     organism = ''
     full_sequence = ''
     pro_location = ''
-    try:
-        handle = ExPASy.get_sprot_raw(id)
-        try:
-            record = SwissProt.read(handle)
-        except ValueError:
-            record = None
-    except (HTTPError, BadStatusLine, URLError) as err:
-        print(err)
-        record = None
 
-    if record is not None:
+    handle = make_request(id)
+    if handle is not None:
+        record = SwissProt.read(handle)
         organism = record.organism
         pro_location = protein_location(record)
         position = cys_position(record, sequence, location)
@@ -89,16 +108,7 @@ def ExPasy_alt(id, position):
     protein = ''
     function = ''
 
-    try:
-        handle = ExPASy.get_sprot_raw(id)
-        try:
-            record = SwissProt.read(handle)
-        except ValueError:
-            record = None
-    except (HTTPError, BadStatusLine, URLError) as err:
-        print(err)
-        record = None
-
+    record = make_request(id)
     if record is not None:
         protein = record.description
         function = cys_function(record, position)
