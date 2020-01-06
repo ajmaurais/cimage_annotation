@@ -8,11 +8,7 @@ import os.path
 import sys
 import argparse
 
-from subprograms import MSParser
-from subprograms import UniProt
-from subprograms import Blast
-from subprograms import Alignments
-# Check for all necessary sys.argv commands
+from .submodules import MSParser, UniProt, Blast, Alignments
 
 # List of organisms for conservation analysis
 organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
