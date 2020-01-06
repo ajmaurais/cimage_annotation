@@ -1,5 +1,5 @@
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(name='cimage_annotation',
       version='2.0.0',
@@ -19,7 +19,8 @@ setup(name='cimage_annotation',
       python_requires='>=3.6.*, >=3.7.*, >=3.8.*',
       install_requires=['biopython'],
       dependency_links=['https://github.com/ajmaurais/biopython/tarball/swissprot_bugfix#egg=package-1.0'],
-      entry_points={'console_scripts': ['cimage_annotation=cimage_annotation:main']}
+      entry_points={'console_scripts': ['cimage_annotation=cimage_annotation:main']},
+      scripts = ['bin/cimage_annotation']
 )
 
 
