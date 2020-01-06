@@ -33,8 +33,8 @@ def make_request(uniprot_id, n_retry = 10):
     for i in range(n_iter):
         try:
             handle = ExPASy.get_sprot_raw(uniprot_id)
-        except (HTTPError, BadStatusLine, URLError) as err:
-            sys.stderr.write('Retry {} of {} for {}\n'.format(i, n_iter, uniprot_id))
+        except (HTTPError, BadStatusLine, URLError) as e:
+            sys.stderr.write('Retry {} of {} for {}\n\t{}'.format(i, n_iter, uniprot_id, e))
             continue
 
     return handle
@@ -68,7 +68,6 @@ def cys_function(record, position):
     cys_function = ''
 
     for feature in record.features:
-
         try:
             if feature.type.upper() == 'DISULFID' and \
                str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
@@ -80,7 +79,7 @@ def cys_function(record, position):
                  (int(feature.location.end) - int(feature.location.start)) <= 10 and \
                  int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
                 cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
-        except (ValueError, TypeError) as e:
+        except TypeError as e:
             continue 
 
     return cys_function
@@ -108,8 +107,9 @@ def ExPasy_alt(id, position):
     protein = ''
     function = ''
 
-    record = make_request(id)
-    if record is not None:
+    handle = make_request(id)
+    if handle is not None:
+        record = SwissProt.read(handle)
         protein = record.description
         function = cys_function(record, position)
 
