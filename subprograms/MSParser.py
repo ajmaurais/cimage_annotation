@@ -1,5 +1,8 @@
 #! /usr/bin/env/ python
 
+PRINT_COLS=['index', 'id', 'symbol', 'description', 'protein_location', 'sequence', 'mass', 'position', 'cys_function']
+ALLIGNMENT_COLUMNS = ['id', 'evalue', 'description', 'position', 'function']
+
 def cimage(line, organism_list, defined_organism):
     line_list = line.split('\t')
     line_dict = {}
@@ -45,33 +48,21 @@ def cimage(line, organism_list, defined_organism):
     return line_dict
 
 def dtaselect(line, organism_list):
+    raise NotImplementedError()
+
     line_dict = ''
     return line_dict
 
 def output(line_dict, organism_list, defined_organism):
-    print(len(line_dict))
-    line = ''
-    line = (line_dict['index'] + '\t')
-    line += (line_dict['id'] + '\t')
-    line += (line_dict['symbol'] + '\t')
-    line += (line_dict['description'] + '\t')
-    line += (line_dict['protein_location'] + '\t')
-    line += (line_dict['sequence'] + '\t')
-    line += (line_dict['mass'] + '\t')
-    line += (line_dict['position'] + '\t')
-    line += (line_dict['cys_function'] + '\t')
+
+    line = '\t'.join([line_dict[x] for x in PRINT_COLS])
+
     for organism in organism_list:
         line += (line_dict[organism + '_conserved'] + '\t')
-    line += (line_dict[defined_organism + '_id'] + '\t')
-    line += (line_dict[defined_organism + '_evalue'] + '\t')
-    line += (line_dict[defined_organism+ '_description'] + '\t')
-    line += (line_dict[defined_organism+ '_position'] + '\t')
-    line += (line_dict[defined_organism+ '_function'] + '\t')
-
+    line += '\t'.join([line_dict['{}_{}'.format(defined_organism, x)] for x in ALLIGNMENT_COLUMNS])
 
     n = 1
     while n < (len(line_dict) - 19):
-        print(line_dict[n])
         line += (line_dict[n] + '\t')
         n += 1
     line = line.rstrip('\t')
