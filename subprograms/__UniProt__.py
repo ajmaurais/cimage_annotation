@@ -54,7 +54,7 @@ def cys_function(record, position):
                  (int(feature.location.end) - int(feature.location.start)) <= 10 and \
                  int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
                 cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
-        except ValueError as e:
+        except (ValueError, TypeError) as e:
             continue 
 
     return cys_function
