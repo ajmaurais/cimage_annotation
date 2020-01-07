@@ -41,7 +41,10 @@ def main():
                         help='Choose whether to balast protein sequences to determine cysteine conservation.'
                              '0 is the default.')
 
-    parser.add_argument('-d', '--defined_organism', default='none')
+    parser.add_argument('-d', '--database_dir', type = str,
+                        help = 'Path to directory containing sequence databases to use for allignment.')
+
+    parser.add_argument('-o', '--defined_organism', default='none')
 
     parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
@@ -100,17 +103,17 @@ def main():
         full_sequences[file_input[i]['id']] = UniProt_data[3]
 
     if args.align:
-        for i, line in enumerate(file_input):
+        for i in peptide_indecies:
             # write full protein sequence to file for blast analysis
             f_seq = open(path + 'sequence.txt', 'w')
-            f_seq.write('>sp|' + line['id'] + '|' + line['description'] + '\n' + full_sequences[line['id']])
+            f_seq.write('>sp|' + file_input[i]['id'] + '|' + file_input[i]['description'] + '\n' + full_sequences[file_input[i]['id']])
             f_seq.close()
 
             # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
             for organism in organism_list:
-                Blast.blastp(organism, path)
+                Blast.blastp(organism, path, args.database_dir)
                 Alignments.align_write(path, organism)
-                alignment_values = Alignments.Align_file_parse(line['position'], path)
+                alignment_values = Alignments.Align_file_parse(file_input[i]['position'], path)
                 file_input[i][str(organism) + '_conserved'] = alignment_values[2]
 
                 # for comparative organism analyze Uniprot entry of best blast hit
