@@ -58,7 +58,7 @@ def output(line_dict, organism_list, defined_organism):
     line = '\t'.join([line_dict[x] for x in PRINT_COLS])
 
     for organism in organism_list:
-        line += (line_dict[organism + '_conserved'] + '\t')
+        line += '\t{}'.format(line_dict[organism + '_conserved'])
     line += '\t'.join([line_dict['{}_{}'.format(defined_organism, x)] for x in ALLIGNMENT_COLUMNS])
 
     n = 1
