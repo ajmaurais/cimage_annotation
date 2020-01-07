@@ -4,19 +4,21 @@ import sys
 import os
 import subprocess
 
-def blastp(organism, path):
-    
-    databases = {'human':'human_nr_uniprot',
-                 'mouse':'mouse_nr_uniprot',
-                 'fly':'fly_nr_uniprot',
-                 'yeast':'yeast_nr_uniprot', 
-                 'mustard':'mustard_nr_uniprot', 
-                 'worms':'worms_nr_uniprot'}
+
+DATABASES = {'human':'human_nr_uniprot',
+             'mouse':'mouse_nr_uniprot',
+             'fly':'fly_nr_uniprot',
+             'yeast':'yeast_nr_uniprot',
+             'mustard':'mustard_nr_uniprot',
+             'worms':'worms_nr_uniprot'}
+
+
+def blastp(organism, path, database_path):
 
     exe = 'blastp'
-    cmd = exe 
+    cmd = exe
     cmd += ' -query ' + path + 'sequence.txt'
-    cmd += ' -db ' + 'databases/' + databases[organism]
+    cmd += ' -db {}/{}'.format(database_path, DATABASES[organism])
     cmd += ' -out ' + path + 'alignment.txt'
     cmd += ' -outfmt ' + '0'
     cmd += ' -num_alignments ' + '5'
