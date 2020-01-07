@@ -5,8 +5,12 @@ import os
 import os.path
 from urllib.error import URLError, HTTPError
 from http.client import BadStatusLine
+from multiprocessing.pool import ThreadPool as Pool
+from multiprocessing import cpu_count
+from tqdm import tqdm
+import functools
+from Bio import ExPASy, SeqIO, SwissProt
 
-from Bio import ExPASy, SwissProt, SeqIO
 
 features_list =['CA_BIND', 'ZN_FING', 'DNA_BIND', 'NP_BIND',
                  'ACT_SITE', 'METAL', 'BINDING', 'SITE',
@@ -15,7 +19,18 @@ features_list =['CA_BIND', 'ZN_FING', 'DNA_BIND', 'NP_BIND',
                  'UNSURE', 'CONFLICT', 'REGION']
 
 
-def make_request(uniprot_id, n_retry = 10):
+def _parse_record(handle):
+
+    record = None
+    if handle is not None:
+        try:
+            record = SwissProt.read(handle)
+        except ValueError as e:
+            pass
+    return record
+
+
+def make_request(uniprot_id, verbose = True, n_retry = 10):
     '''
     ExPASy get_sprot_raw wrapper to make retries if an http error occurs.
 
@@ -29,23 +44,64 @@ def make_request(uniprot_id, n_retry = 10):
     '''
 
     n_iter = n_retry if n_retry > 0 else 1
-    handle = None
+    ret = None
     for i in range(n_iter):
         try:
             handle = ExPASy.get_sprot_raw(uniprot_id)
         except HTTPError as e:
             if e.getcode() >= 400:
-                sys.stderr.write('No UniProt page found for {}\n\tStatus code: {}\n'.format(uniprot_id, e.getcode()))
+                if verbose:
+                    sys.stderr.write('No UniProt page found for {}\n\tStatus code: {}\n'.format(uniprot_id, e.getcode()))
                 break
             else:
-                sys.stderr.write('Retry {} of {} for {}\n\t{}'.format(i, n_iter, uniprot_id, e))
+                if verbose:
+                    sys.stderr.write('Retry {} of {} for {}\n\t{}\n'.format(i, n_iter, uniprot_id, e))
                 continue
         except (BadStatusLine, URLError) as e:
-            sys.stderr.write('Retry {} of {} for {}\n\t{}'.format(i, n_iter, uniprot_id, e))
+            if verbose:
+                sys.stderr.write('Retry {} of {} for {}\n\t{}\n'.format(i, n_iter, uniprot_id, e))
             continue
+        else:
+            return _parse_record(handle)
 
-    return handle
+    return ret
 
+
+def get_uniprot_records(ids, parallel):
+    '''
+    Get a dict of UniProt records.
+
+    Parameters
+    ----------
+    ids: list like
+        List of uniprot ids to retreive.
+    parallel: bool
+        Should the http request be made in parallel?
+
+    Return
+    ------
+    records: dict
+        Key value paris of IDs and records.
+    '''
+
+    #calculate number of threads required
+    _nThread = int(1)
+    listLen = len(ids)
+    cpuCount = cpu_count()
+    _nThread = cpuCount if cpuCount < listLen else listLen
+
+    sys.stdout.write('Searching for data with {} thread(s)...\n'.format(_nThread))
+    ret = list()
+    #for i in ids:
+    #    ret.append(make_request(i))
+    with Pool(processes=_nThread) as pool:
+        ret = list(tqdm(pool.imap(functools.partial(make_request, verbose = False), ids),
+                             total = listLen,
+                             miniters=1,
+                             file = sys.stdout))
+
+    assert(len(ids) == len(ret))
+    return {k: record for k, record in zip(ids, ret)}
 
 def protein_location(record):
     pro_location = ''
@@ -91,16 +147,14 @@ def cys_function(record, position):
 
     return cys_function
 
-def ExPasy(id, sequence, location):
+def ExPasy(id, sequence, location, record):
     position = ''
     function = ''
     organism = ''
     full_sequence = ''
     pro_location = ''
 
-    handle = make_request(id)
-    if handle is not None:
-        record = SwissProt.read(handle)
+    if record is not None:
         organism = record.organism
         pro_location = protein_location(record)
         position = cys_position(record, sequence, location)
@@ -110,13 +164,11 @@ def ExPasy(id, sequence, location):
         position = 'Bad ID'
     return organism, position, function, full_sequence, pro_location
 
-def ExPasy_alt(id, position):
+def ExPasy_alt(id, position, record):
     protein = ''
     function = ''
 
-    handle = make_request(id)
-    if handle is not None:
-        record = SwissProt.read(handle)
+    if record is not None:
         protein = record.description
         function = cys_function(record, position)
 
@@ -124,3 +176,4 @@ def ExPasy_alt(id, position):
         protein = 'Bad ID'
 
     return protein, function
+

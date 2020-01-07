@@ -1,8 +1,5 @@
 #! /usr/bin/env python
-#
-#
 
-# Import modules
 import os
 import os.path
 import sys
@@ -65,7 +62,9 @@ def main():
     peptides = []
     proteins = []
     index = ''
-    full_sequences = []
+    uniuque_ids = set()
+    peptide_indecies = list()
+    full_sequences = dict()
 
     # Analysis for a cimage file creates lists (above) of dictionaries
     for i, line in enumerate(file_input):
@@ -80,23 +79,31 @@ def main():
         else:
             file_input[i]['index'] = index # create protein lines
             proteins.append(line)
+            uniuque_ids.add(line['id'])
+            peptide_indecies.append(i)
 
-            sys.stdout.write('Working on {}\n'.format(line['id']))
-            # Get and Parse Uniprot entry for protein
-            UniProt_data = UniProt.ExPasy(line['id'],
-                                          line['sequence'].split('.')[1].split('*')[0] + line['sequence'].split('.')[1].split('*')[1],
-                                          line['sequence'].split('.')[1].find('*'))
+    sys.stdout.write('Retreiving protein Uniprot records.')
+    record_dict = UniProt.get_uniprot_records(uniuque_ids, args.parallel)
 
-            file_input[i]['position'] = UniProt_data[1]   # cysteine position
-            file_input[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
-            file_input[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
-            full_sequences.append(UniProt_data[3])
+    for i in peptide_indecies:
+        #sys.stdout.write('Working on {}\n'.format(file_input[i]['id']))
+        # Get and Parse Uniprot entry for protein
+        UniProt_data = UniProt.ExPasy(file_input[i]['id'],
+                                      file_input[i]['sequence'].split('.')[1].split('*')[0] +
+                                      file_input[i]['sequence'].split('.')[1].split('*')[1],
+                                      file_input[i]['sequence'].split('.')[1].find('*'),
+                                      record_dict[file_input[i]['id']])
+
+        file_input[i]['position'] = UniProt_data[1]   # cysteine position
+        file_input[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
+        file_input[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
+        full_sequences[file_input[i]['id']] = UniProt_data[3]
 
     if args.align:
         for i, line in enumerate(file_input):
             # write full protein sequence to file for blast analysis
             f_seq = open(path + 'sequence.txt', 'w')
-            f_seq.write('>sp|' + line['id'] + '|' + line['description'] + '\n' + UniProt_data[3])
+            f_seq.write('>sp|' + line['id'] + '|' + line['description'] + '\n' + full_sequences[line['id']])
             f_seq.close()
 
             # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
