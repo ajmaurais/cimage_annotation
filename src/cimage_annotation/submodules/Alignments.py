@@ -101,7 +101,7 @@ def align_file_parse(position, path=None, string=None):
     return id, evalue, conserved, homolog_position
 
 
-def _blastp_worker(search_item, sequences = None, db = None, verbose=False):
+def _blastp_worker(search_item, db = None, verbose=False):
 
     return_code, dat = blastp(search_item[2], db, search_item[1], verbose=verbose)
     return dat
@@ -126,12 +126,16 @@ def align_all(peptides, sequences, db_path, organisms, parallel=True, verbose=Fa
 
     sys.stdout.write('Performing alignment with {} thread(s)...\n'.format(_nThread))
     results = list()
-    with Pool(processes=_nThread) as pool:
-        results = list(tqdm(pool.imap(functools.partial(_blastp_worker, sequences = sequences, db = db_path, verbose=verbose),
-                                      search_list),
-                                      total = listLen,
-                                      miniters=1,
-                                      file = sys.stdout))
+    if parallel:
+        with Pool(processes=_nThread) as pool:
+            results = list(tqdm(pool.imap(functools.partial(_blastp_worker, db = db_path, verbose=verbose),
+                                          search_list),
+                                          total = listLen,
+                                          miniters=1,
+                                          file = sys.stdout))
+    else:
+        for it in search_list:
+            results.append(_blastp_worker(it, db=db_path, verbose=verbose))
 
     assert(len(search_list) == len(results))
 

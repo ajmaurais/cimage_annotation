@@ -85,9 +85,9 @@ def get_uniprot_records(ids, parallel, verbose=False):
     '''
 
     #calculate number of threads required
+    listLen = len(ids)
     if parallel:
         _nThread = int(1)
-        listLen = len(ids)
         cpuCount = cpu_count()
         _nThread = cpuCount if cpuCount < listLen else listLen
     else:

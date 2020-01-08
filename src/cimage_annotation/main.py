@@ -8,6 +8,7 @@ import argparse
 from .submodules import MSParser, UniProt, Blast, Alignments, Fasta
 
 PROG_VERSION=2.0
+SEQ_PATH='sequences.fasta'
 
 # List of organisms for conservation analysis
 organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
@@ -44,18 +45,19 @@ def main():
     parser.add_argument('--ofname', default='Cysteine_annotation.tsv',
                         help='Name of file to write results to.')
 
-    parser.add_argument('--align', choices=[0,1], type=int, default=0,
+    parser.add_argument('-a', '--align', choices=[0,1], type=int, default=0,
                         help='Choose whether to balast protein sequences to determine cysteine conservation. '
+                             'If this option is specified, a database dir must also be specified with the --database_dir option. '
                              '0 is the default.')
 
-    parser.add_argument('--wite_allignment_data', choices=[0,1], type=int, default=0,
-                        help='Choose whether to write allignment data. '
+    parser.add_argument('-w', '--wite_alignment_data', choices=[0,1], type=int, default=1,
+                        help='Choose whether to write alignment data. '
                              '1 is the default.')
 
     parser.add_argument('-d', '--database_dir', type = str,
-                        help = 'Path to directory containing sequence databases to use for allignment.')
+                        help = 'Path to directory containing sequence databases to use for alignment.')
 
-    parser.add_argument('-o', '--defined_organism', default='none')
+    parser.add_argument('-o', '--defined_organism', default='none', type=str)
 
     parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
@@ -70,6 +72,12 @@ def main():
     args = parser.parse_args()
 
     sys.stdout.write('cimage_annotation v{}\n'.format(PROG_VERSION))
+
+    # Manually check args.
+    if args.align and args.database_dir is None:
+        sys.stderr.write('--database_dir must be specified when --align 1 is set\n')
+        return -1
+
     # Open cimage or dtaselect file
     file_input = parse_input(args.input_file, args.file_type, args.defined_organism)
 
@@ -94,6 +102,10 @@ def main():
             file_input[i]['index'] = index # create protein lines
             peptides.append(line)
             uniuque_ids.add(line['id'])
+
+    if len(peptides) == 0:
+        sys.stderr.write('ERROR: No peptides found in {}!\n\tExiting...\n'.format(args.input_file))
+        return -1
 
     sys.stdout.write('\nRetreiving protein Uniprot records.\n')
     record_dict = UniProt.get_uniprot_records(uniuque_ids, args.parallel, verbose=args.verbose)
@@ -121,8 +133,8 @@ def main():
                 seq_written = True
         sequences[peptides[i]['id']] = UniProt_data[3]
 
-    # Replace allignment files with empty string so they won't be continiously overwritten
-    if args.wite_allignment_data:
+    # Replace alignment files with empty string so they won't be continiously overwritten
+    if args.wite_alignment_data:
         for organism in organism_list:
             with open('{}_alignments.txt'.format(organism), 'w') as outF:
                 outF.write('')
@@ -130,14 +142,14 @@ def main():
     if args.align:
         # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
         sys.stdout.write('\nAlligning protein sequences to determine cysteine conservation...\n')
-        allignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
+        alignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
                                                parallel=args.parallel, verbose=args.verbose)
 
         seen=set() # Keep track of seen protein IDs
         for i, p in enumerate(peptides):
             for organism in organism_list:
-                raw_alignment_data = allignment_data[p['id']][organism]
-                if p['id'] in seen and args.wite_allignment_data:
+                raw_alignment_data = alignment_data[p['id']][organism]
+                if p['id'] in seen and args.wite_alignment_data:
                     Alignments.align_write('{}_alignments.txt'.format(organism), raw_alignment_data)
                 seen.add(p['id'])
 
