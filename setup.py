@@ -17,7 +17,7 @@ setup(name='cimage_annotation',
       package_dir={'':'src'},
       packages=find_packages(where='src'),
       python_requires='>=3.6.*',
-      install_requires=['biopython', 'tqdm'],
+      install_requires=['biopython==1.77.dev0', 'tqdm'],
       dependency_links=['https://github.com/ajmaurais/biopython/tarball/swissprot_bugfix#egg=package-1.0'],
       entry_points={'console_scripts': ['cimage_annotation=cimage_annotation:main']},
 )
