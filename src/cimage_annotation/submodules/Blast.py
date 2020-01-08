@@ -13,7 +13,7 @@ DATABASES = {'human':'human_nr_uniprot',
              'worms':'worms_nr_uniprot'}
 
 
-def blastp(organism, database_path, query):
+def blastp(organism, database_path, query, verbose=False):
 
     # TODO: make blastp exe an option in setup.py
     exe = 'blastp'
@@ -28,7 +28,7 @@ def blastp(organism, database_path, query):
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     out, err = p.communicate()
-    if err:
+    if err and verbose:
         sys.stderr.write(err.decode('utf-8'))
     return p.returncode, out.decode('utf-8')
 
