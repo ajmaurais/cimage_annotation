@@ -34,11 +34,11 @@ class FastaFile(object):
     a dict containing ids, and index offsets is stored in self._id_offsets.
     '''
 
-    uniprot_id_re = '[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}'
-    sequence_re = '[A-Za-z\s]+'
-    entry_re = '>[st][rp]\|({}\|.*\n{})[>]?'.format(uniprot_id_re, sequence_re)
+    acession_re = r'\w+'
+    sequence_re = r'[A-Za-z\s]*'
+    entry_re = r'>[st][rp]\|({})\|.*\n({})(?=[>])?'.format(acession_re, sequence_re)
 
-    def __init__():
+    def __init__(self):
         self._id_offsets = dict()
         self._fbuff = str()
 
@@ -55,6 +55,22 @@ class FastaFile(object):
             self._fbuff = inF.read()
         self._find_offsets()
 
+    def iter_ids(self):
+        l = len(self._id_offsets)
+        for i, k in enumerate(self._id_offsets.keys()):
+            if i < l:
+                yield k
+            else:
+                raise StopIteration
+
+    def iter_items(self):
+        l = len(self._id_offsets)
+        for i, v in enumerate(self._id_offsets.items()):
+            if i < l:
+                yield v
+            else:
+                raise StopIteration
+
     def id_exists(self, acession):
         '''
         Return True if `acession` exists file.
@@ -62,7 +78,7 @@ class FastaFile(object):
 
         return acession in self._id_offsets
 
-    def get_offset(acession):
+    def get_offset(self, acession):
         '''
         Get the index offsets of `acession` in self._fbuff.
 
@@ -73,11 +89,12 @@ class FastaFile(object):
 
         Raises
         ------
-        AssertionError if !self.id_exists(acession)
+        KeyError if !self.id_exists(acession)
         '''
 
-        assert(self.id_exists(acession))
-        return self._id_offsets(acession)
+        if not self.id_exists(acession):
+            raise KeyError('{} does not exist in FastaFile!'.format(acession))
+        return self._id_offsets[acession]
 
     def get_sequence(self, acession):
         '''
@@ -85,15 +102,15 @@ class FastaFile(object):
 
         Raises
         ------
-        AssertionError if !self.id_exists(acession)
+        KeyError if !self.id_exists(acession)
         AssertionError if not able to match self.entry_re at offset.
         AssertionError if acession of match does not match `acession`
         '''
 
         _offset = self.get_offset(acession)
-        m = re.find(self.entry_re, self._fbuff[_offset[0]:_offset[1]])
+        m = re.search(self.entry_re, self._fbuff[_offset[0]:_offset[1]])
         assert(m)
         assert(m.group(1) == acession)
-        return re.sub('\s', '', m.group(3))
+        return re.sub('\s', '', m.group(2))
 
 

@@ -37,6 +37,9 @@ def main():
     parser.add_argument('-f', '--file_type', default = 'cimage', choices=['cimage','dtaselect'],
                         help='Choose input file format. cimage is the default.')
 
+    parser.add_argument('-s', '--write_seq', default = False, action='store_true',
+                        help='Write protein sequences in input to fasta file?')
+
     parser.add_argument('--align', choices=[0,1], type=int, default=0,
                         help='Choose whether to balast protein sequences to determine cysteine conservation.'
                              '0 is the default.')
@@ -67,7 +70,7 @@ def main():
     index = ''
     uniuque_ids = set()
     peptide_indecies = list()
-    full_sequences = dict()
+    sequences = dict()
 
     # Analysis for a cimage file creates lists (above) of dictionaries
     for i, line in enumerate(file_input):
@@ -88,6 +91,7 @@ def main():
     sys.stdout.write('Retreiving protein Uniprot records.')
     record_dict = UniProt.get_uniprot_records(uniuque_ids, args.parallel)
 
+    seq_written=False
     for i in peptide_indecies:
         #sys.stdout.write('Working on {}\n'.format(file_input[i]['id']))
         # Get and Parse Uniprot entry for protein
@@ -100,18 +104,25 @@ def main():
         file_input[i]['position'] = UniProt_data[1]   # cysteine position
         file_input[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
         file_input[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
-        full_sequences[file_input[i]['id']] = UniProt_data[3]
+
+        if args.write_seq:
+            if file_input[i]['id'] not in sequences: #only write sequence if it is not currently in file.
+                Fasta.write_fasta_entry(SEQ_PATH,
+                                        file_input[i]['id'],
+                                        UniProt_data[3],
+                                        description=file_input[i]['description'],
+                                        append=seq_written)
+                seq_written = True
+        sequences[file_input[i]['id']] = UniProt_data[3]
 
     if args.align:
         for i in peptide_indecies:
-            # write full protein sequence to file for blast analysis
-            f_seq = open(path + 'sequence.txt', 'w')
-            f_seq.write('>sp|' + file_input[i]['id'] + '|' + file_input[i]['description'] + '\n' + full_sequences[file_input[i]['id']])
-            f_seq.close()
+
+            sys.stdout.write('Working on {}\n'.format(file_input[i]['id']))
 
             # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
             for organism in organism_list:
-                Blast.blastp(organism, path, args.database_dir)
+                Blast.blastp(organism, path, args.database_dir, sequences[file_input[i]['id']])
                 Alignments.align_write(path, organism)
                 alignment_values = Alignments.Align_file_parse(file_input[i]['position'], path)
                 file_input[i][str(organism) + '_conserved'] = alignment_values[2]
