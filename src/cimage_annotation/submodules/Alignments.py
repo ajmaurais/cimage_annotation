@@ -107,7 +107,7 @@ def _blastp_worker(search_item, db = None, verbose=False):
     return dat
 
 
-def align_all(peptides, sequences, db_path, organisms, parallel=True, verbose=False):
+def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=True, verbose=False):
 
     #construct list to pass to blastp worker
     search_list = list()
@@ -116,17 +116,17 @@ def align_all(peptides, sequences, db_path, organisms, parallel=True, verbose=Fa
             search_list.append((id, sequences[id], o))
 
     #calculate number of threads required
-    if parallel:
-        _nThread = int(1)
-        listLen = len(search_list)
-        cpuCount = cpu_count()
+    _nThread = int(1)
+    listLen = len(search_list)
+    cpuCount = cpu_count()
+    if nThread is None:
         _nThread = cpuCount if cpuCount < listLen else listLen
     else:
-        _nThread = 1
+        _nThread = nThread
 
     sys.stdout.write('Performing alignment with {} thread(s)...\n'.format(_nThread))
     results = list()
-    if parallel:
+    if show_bar:
         with Pool(processes=_nThread) as pool:
             results = list(tqdm(pool.imap(functools.partial(_blastp_worker, db = db_path, verbose=verbose),
                                           search_list),

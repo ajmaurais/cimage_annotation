@@ -4,6 +4,7 @@ import os
 import os.path
 import sys
 import argparse
+from multiprocessing import cpu_count
 
 from .submodules import MSParser, UniProt, Blast, Alignments, Fasta
 
@@ -64,6 +65,10 @@ def main():
                         ' Parallel processing is performed on up to the number of logical cores on your system. '
                         '1 is the default.')
 
+    parser.add_argument('-t', '--nThread', type=int, default=None,
+                        help='Chose how many threads to use for parllel processing.'
+                        'This option overrides the --parallel option.')
+
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
                         help='Print verbose output?')
 
@@ -77,6 +82,12 @@ def main():
     if args.align and args.database_dir is None:
         sys.stderr.write('--database_dir must be specified when --align 1 is set\n')
         return -1
+    _nThread = args.nThread
+    if args.parallel and args.nThread is None:
+        _nThread = cpu_count()
+    elif not args.parallel and args.nThread is None:
+        _nThread = 1
+
 
     # Open cimage or dtaselect file
     file_input = parse_input(args.input_file, args.file_type, args.defined_organism)
@@ -108,7 +119,7 @@ def main():
         return -1
 
     sys.stdout.write('\nRetreiving protein Uniprot records.\n')
-    record_dict = UniProt.get_uniprot_records(uniuque_ids, args.parallel, verbose=args.verbose)
+    record_dict = UniProt.get_uniprot_records(uniuque_ids, _nThread, verbose=args.verbose)
 
     seq_written=False
     for i, p in enumerate(peptides):
@@ -143,7 +154,7 @@ def main():
         # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
         sys.stdout.write('\nAlligning protein sequences to determine cysteine conservation...\n')
         alignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
-                                               parallel=args.parallel, verbose=args.verbose)
+                                              nThread=_nThread, verbose=args.verbose)
 
         seen=set() # Keep track of seen protein IDs
         for i, p in enumerate(peptides):

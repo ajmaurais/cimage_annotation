@@ -67,7 +67,7 @@ def make_request(uniprot_id, verbose = True, n_retry = 10):
     return ret
 
 
-def get_uniprot_records(ids, parallel, verbose=False):
+def get_uniprot_records(ids, nThread, verbose=False):
     '''
     Get a dict of UniProt records.
 
@@ -75,8 +75,8 @@ def get_uniprot_records(ids, parallel, verbose=False):
     ----------
     ids: list like
         List of uniprot ids to retreive.
-    parallel: bool
-        Should the http request be made in parallel?
+    nThread: int
+        Specify how many threads to use to retreive Uniprot records.
 
     Return
     ------
@@ -85,13 +85,13 @@ def get_uniprot_records(ids, parallel, verbose=False):
     '''
 
     #calculate number of threads required
+    _nThread = int(1)
     listLen = len(ids)
-    if parallel:
-        _nThread = int(1)
-        cpuCount = cpu_count()
+    cpuCount = cpu_count()
+    if nThread is None:
         _nThread = cpuCount if cpuCount < listLen else listLen
     else:
-        _nThread = 1
+        _nThread = nThread
 
     sys.stdout.write('Searching for data with {} thread(s)...\n'.format(_nThread))
     ret = list()
@@ -103,6 +103,7 @@ def get_uniprot_records(ids, parallel, verbose=False):
 
     assert(len(ids) == len(ret))
     return {k: record for k, record in zip(ids, ret)}
+
 
 def protein_location(record):
     pro_location = ''
