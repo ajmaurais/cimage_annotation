@@ -7,6 +7,8 @@ import argparse
 
 from .submodules import MSParser, UniProt, Blast, Alignments, Fasta
 
+PROG_VERSION=2.0
+
 # List of organisms for conservation analysis
 organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
 
@@ -39,6 +41,9 @@ def main():
     parser.add_argument('-s', '--write_seq', default = False, action='store_true',
                         help='Write protein sequences in input to fasta file?')
 
+    parser.add_argument('--ofname', default='Cysteine_annotation.tsv',
+                        help='Name of file to write results to.')
+
     parser.add_argument('--align', choices=[0,1], type=int, default=0,
                         help='Choose whether to balast protein sequences to determine cysteine conservation.'
                              ' 0 is the default.')
@@ -64,11 +69,9 @@ def main():
 
     args = parser.parse_args()
 
+    sys.stdout.write('cimage_annotation v{}\n'.format(PROG_VERSION))
     # Open cimage or dtaselect file
     file_input = parse_input(args.input_file, args.file_type, args.defined_organism)
-
-    # Determine path for file output
-    path = '{}/'.format(os.path.abspath(os.path.dirname(args.input_file)))
 
     header = []
     cysteines = []
@@ -92,12 +95,11 @@ def main():
             peptides.append(line)
             uniuque_ids.add(line['id'])
 
-    sys.stdout.write('Retreiving protein Uniprot records.')
+    sys.stdout.write('\nRetreiving protein Uniprot records.\n')
     record_dict = UniProt.get_uniprot_records(uniuque_ids, args.parallel, verbose=args.verbose)
 
     seq_written=False
     for i, p in enumerate(peptides):
-        #sys.stdout.write('Working on {}\n'.format(file_input[i]['id']))
         # Get and Parse Uniprot entry for protein
         UniProt_data = UniProt.ExPasy(p['id'],
                                       p['sequence'].split('.')[1].split('*')[0] +
@@ -127,6 +129,7 @@ def main():
 
     if args.align:
         # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
+        sys.stdout.write('\nAlligning protein sequences to determine cysteine conservation...\n')
         allignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
                                                parallel=args.parallel, verbose=args.verbose)
 
@@ -162,16 +165,15 @@ def main():
                         peptides[i][args.defined_organism + '_function'] = ''
 
     # file output
-    output = open(path + 'Cysteine_annotation.tsv', 'w')
-    output.write(MSParser.output(header[0], organism_list, args.defined_organism))
-    for cysteine in cysteines:
-        output.write(MSParser.output(cysteine, organism_list, args.defined_organism))
-        for peptide in peptides:
-            if peptide['index'].strip() == cysteine['index'].strip():
-                output.write(MSParser.output(peptide, organism_list, args.defined_organism))
-            else:
-                pass
-    output.close()
+    with open(args.ofname, 'w') as outF:
+        outF.write(MSParser.output(header[0], organism_list, args.defined_organism))
+        for cysteine in cysteines:
+            outF.write(MSParser.output(cysteine, organism_list, args.defined_organism))
+            for peptide in peptides:
+                if peptide['index'].strip() == cysteine['index'].strip():
+                    outF.write(MSParser.output(peptide, organism_list, args.defined_organism))
+    sys.stdout.write('Results written to {}\n\n'.format(args.ofname))
+
 
 if __name__ == '__main__':
     main()
