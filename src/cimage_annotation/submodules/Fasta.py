@@ -6,18 +6,18 @@ def write_fasta_entry(fname, acession, sequence, description = '', append = True
     '''
     Write fasta entry to `fname`
 
-    Paramaters
+    Parameters
     ----------
     fname: str
         Path to file to write to.
     acession: str
-        Unique identifer for sequence.
+        Unique identifier for sequence.
     sequence: str
         Entry sequence.
     description: str
         Entry description (optional)
     append: bool
-        Should `fname` be overwitten or appended to?
+        Should `fname` be overwritten or appended to?
     '''
 
     with open(fname, 'a' if append else 'w') as outF:
@@ -29,7 +29,7 @@ class FastaFile(object):
     Basic FastaFile container.
 
     A file is parsed with a regular expression for fasta entries.
-    (see self.entry_re for the regex wich is used.)
+    (see self.entry_re for the regex which is used.)
     The text of the file is stored in self._fbuff, and
     a dict containing ids, and index offsets is stored in self._id_offsets.
     '''

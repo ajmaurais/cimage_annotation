@@ -34,10 +34,10 @@ def make_request(uniprot_id, verbose = True, n_retry = 10):
     '''
     ExPASy get_sprot_raw wrapper to make retries if an http error occurs.
 
-    Paramaters
+    Parameters
     ----------
     uniprot_id: str
-        Uniprot ID to retreive.
+        Uniprot ID to retrieve.
 
     n_retry: int
         Number of times to retry request if an error occurs
@@ -74,9 +74,9 @@ def get_uniprot_records(ids, nThread, verbose=False):
     Parameters
     ----------
     ids: list like
-        List of uniprot ids to retreive.
+        List of uniprot ids to retrieve.
     nThread: int
-        Specify how many threads to use to retreive Uniprot records.
+        Specify how many threads to use to retrieve Uniprot records.
 
     Return
     ------

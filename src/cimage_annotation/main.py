@@ -144,7 +144,7 @@ def main():
                 seq_written = True
         sequences[peptides[i]['id']] = UniProt_data[3]
 
-    # Replace alignment files with empty string so they won't be continiously overwritten
+    # Replace alignment files with empty string so they won't be continuously overwritten
     if args.wite_alignment_data:
         for organism in organism_list:
             with open('{}_alignments.txt'.format(organism), 'w') as outF:
