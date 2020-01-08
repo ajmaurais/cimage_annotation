@@ -45,12 +45,12 @@ def main():
                         help='Name of file to write results to.')
 
     parser.add_argument('--align', choices=[0,1], type=int, default=0,
-                        help='Choose whether to balast protein sequences to determine cysteine conservation.'
-                             ' 0 is the default.')
+                        help='Choose whether to balast protein sequences to determine cysteine conservation. '
+                             '0 is the default.')
 
     parser.add_argument('--wite_allignment_data', choices=[0,1], type=int, default=0,
-                        help='Choose whether to write allignment data.'
-                             ' 1 is the default.')
+                        help='Choose whether to write allignment data. '
+                             '1 is the default.')
 
     parser.add_argument('-d', '--database_dir', type = str,
                         help = 'Path to directory containing sequence databases to use for allignment.')
@@ -59,8 +59,8 @@ def main():
 
     parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
-                        ' Parallel processing is performed on up to the number of logical cores on your system.'
-                        ' 1 is the default.')
+                        ' Parallel processing is performed on up to the number of logical cores on your system. '
+                        '1 is the default.')
 
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
                         help='Print verbose output?')
