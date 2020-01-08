@@ -2,21 +2,33 @@
 
 import sys
 import re
+from multiprocessing import Pool
+from multiprocessing import cpu_count
+import itertools
+from tqdm import tqdm
+import functools
+
+from .Blast import blastp
 
 UNIPROT_RE = '[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}'
 
-def align_write(path, organism):
-    f = open(path + organism + '_alignments.txt', 'a')
-    g = open(path + 'alignment.txt', 'r')
-    align = g.read()
-    f.write(align + '\n\n\n\n\n\n')
-    f.close()
-    g.close()
+def align_write(fname, dat):
+    with open(fname, 'a') as outF:
+        outF.write(dat + '\n\n\n\n\n\n')
 
-def Align_file_parse(position, path):
-    f = open(path + 'alignment.txt', 'r')
-    align = f.read()
-    f.close()
+
+def align_file_parse(position, path=None, string=None):
+
+    if sum([bool(x) for x in [path, string]]) != 1:
+        raise RuntimeError('path xor string must be specified!')
+
+    # get arg for text to process
+    if path is not None:
+        f = open(path + 'alignment.txt', 'r')
+        align = f.read()
+        f.close()
+    elif string is not None:
+        align=string
 
     conserved = ''
     id = ''
@@ -26,7 +38,7 @@ def Align_file_parse(position, path):
     if len(align.split('\n\n')) < 9:
         conserved = 'Error'
     else:
-        align_header = align.split('\n\n')[8]
+        align_header = align.split('\n\n')[7]
 
         if align_header.strip() == '***** No hits found *****':
             conserved = '--'
@@ -87,3 +99,47 @@ def Align_file_parse(position, path):
                 conserved = 'No'
 
     return id, evalue, conserved, homolog_position
+
+
+def _blastp_worker(search_item, sequences = None, db = None, verbose=False):
+
+    return_code, dat = blastp(search_item[2], db, search_item[1], verbose=verbose)
+    return dat
+
+
+def align_all(peptides, sequences, db_path, organisms, parallel=True, verbose=False):
+
+    #construct list to pass to blastp worker
+    search_list = list()
+    for id in set([x['id'] for x in peptides]):
+        for o in organisms:
+            search_list.append((id, sequences[id], o))
+
+    #calculate number of threads required
+    if parallel:
+        _nThread = int(1)
+        listLen = len(search_list)
+        cpuCount = cpu_count()
+        _nThread = cpuCount if cpuCount < listLen else listLen
+    else:
+        _nThread = 1
+
+    sys.stdout.write('Performing alignment with {} thread(s)...\n'.format(_nThread))
+    results = list()
+    with Pool(processes=_nThread) as pool:
+        results = list(tqdm(pool.imap(functools.partial(_blastp_worker, sequences = sequences, db = db_path, verbose=verbose),
+                                      search_list),
+                                      total = listLen,
+                                      miniters=1,
+                                      file = sys.stdout))
+
+    assert(len(search_list) == len(results))
+
+    ret=dict()
+    for sl, r in zip(search_list, results):
+        if sl[0] not in ret:
+            ret[sl[0]]=dict()
+        ret[sl[0]][sl[2]]=r
+
+    return ret
+

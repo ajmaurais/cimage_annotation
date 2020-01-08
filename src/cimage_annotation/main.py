@@ -5,11 +5,10 @@ import os.path
 import sys
 import argparse
 
-from .submodules import MSParser, UniProt, Blast, Alignments
+from .submodules import MSParser, UniProt, Blast, Alignments, Fasta
 
 # List of organisms for conservation analysis
 organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
-
 
 def parse_input(fname, file_type, defined_organism):
     _parser = None
@@ -37,9 +36,16 @@ def main():
     parser.add_argument('-f', '--file_type', default = 'cimage', choices=['cimage','dtaselect'],
                         help='Choose input file format. cimage is the default.')
 
+    parser.add_argument('-s', '--write_seq', default = False, action='store_true',
+                        help='Write protein sequences in input to fasta file?')
+
     parser.add_argument('--align', choices=[0,1], type=int, default=0,
                         help='Choose whether to balast protein sequences to determine cysteine conservation.'
-                             '0 is the default.')
+                             ' 0 is the default.')
+
+    parser.add_argument('--wite_allignment_data', choices=[0,1], type=int, default=0,
+                        help='Choose whether to write allignment data.'
+                             ' 1 is the default.')
 
     parser.add_argument('-d', '--database_dir', type = str,
                         help = 'Path to directory containing sequence databases to use for allignment.')
@@ -48,8 +54,11 @@ def main():
 
     parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
-                        'Parallel processing is performed on up to the number of logical cores on your system.'
-                        '1 is the default.')
+                        ' Parallel processing is performed on up to the number of logical cores on your system.'
+                        ' 1 is the default.')
+
+    parser.add_argument('-v', '--verbose', default=False, action='store_true',
+                        help='Print verbose output?')
 
     parser.add_argument('input_file', type = str, help = 'Path to input file.')
 
@@ -62,12 +71,11 @@ def main():
     path = '{}/'.format(os.path.abspath(os.path.dirname(args.input_file)))
 
     header = []
+    cysteines = []
     peptides = []
-    proteins = []
     index = ''
     uniuque_ids = set()
-    peptide_indecies = list()
-    full_sequences = dict()
+    sequences = dict()
 
     # Analysis for a cimage file creates lists (above) of dictionaries
     for i, line in enumerate(file_input):
@@ -77,44 +85,61 @@ def main():
 
         elif line['index'].strip() != '':  # create peptide lines (no protein information - includes overall ratio)
             index = line['index'].strip()
-            peptides.append(line)
+            cysteines.append(line)
 
         else:
             file_input[i]['index'] = index # create protein lines
-            proteins.append(line)
+            peptides.append(line)
             uniuque_ids.add(line['id'])
-            peptide_indecies.append(i)
 
     sys.stdout.write('Retreiving protein Uniprot records.')
-    record_dict = UniProt.get_uniprot_records(uniuque_ids, args.parallel)
+    record_dict = UniProt.get_uniprot_records(uniuque_ids, args.parallel, verbose=args.verbose)
 
-    for i in peptide_indecies:
+    seq_written=False
+    for i, p in enumerate(peptides):
         #sys.stdout.write('Working on {}\n'.format(file_input[i]['id']))
         # Get and Parse Uniprot entry for protein
-        UniProt_data = UniProt.ExPasy(file_input[i]['id'],
-                                      file_input[i]['sequence'].split('.')[1].split('*')[0] +
-                                      file_input[i]['sequence'].split('.')[1].split('*')[1],
-                                      file_input[i]['sequence'].split('.')[1].find('*'),
-                                      record_dict[file_input[i]['id']])
+        UniProt_data = UniProt.ExPasy(p['id'],
+                                      p['sequence'].split('.')[1].split('*')[0] +
+                                      p['sequence'].split('.')[1].split('*')[1],
+                                      p['sequence'].split('.')[1].find('*'),
+                                      record_dict[p['id']])
 
-        file_input[i]['position'] = UniProt_data[1]   # cysteine position
-        file_input[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
-        file_input[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
-        full_sequences[file_input[i]['id']] = UniProt_data[3]
+        peptides[i]['position'] = UniProt_data[1]   # cysteine position
+        peptides[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
+        peptides[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
+
+        if args.write_seq:
+            if p['id'] not in sequences: #only write sequence if it is not currently in file.
+                Fasta.write_fasta_entry(SEQ_PATH,
+                                        p['id'],
+                                        UniProt_data[3],
+                                        description=p['description'],
+                                        append=seq_written)
+                seq_written = True
+        sequences[peptides[i]['id']] = UniProt_data[3]
+
+    # Replace allignment files with empty string so they won't be continiously overwritten
+    if args.wite_allignment_data:
+        for organism in organism_list:
+            with open('{}_alignments.txt'.format(organism), 'w') as outF:
+                outF.write('')
 
     if args.align:
-        for i in peptide_indecies:
-            # write full protein sequence to file for blast analysis
-            f_seq = open(path + 'sequence.txt', 'w')
-            f_seq.write('>sp|' + file_input[i]['id'] + '|' + file_input[i]['description'] + '\n' + full_sequences[file_input[i]['id']])
-            f_seq.close()
+        # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
+        allignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
+                                               parallel=args.parallel, verbose=args.verbose)
 
-            # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
+        seen=set() # Keep track of seen protein IDs
+        for i, p in enumerate(peptides):
             for organism in organism_list:
-                Blast.blastp(organism, path, args.database_dir)
-                Alignments.align_write(path, organism)
-                alignment_values = Alignments.Align_file_parse(file_input[i]['position'], path)
-                file_input[i][str(organism) + '_conserved'] = alignment_values[2]
+                raw_alignment_data = allignment_data[p['id']][organism]
+                if p['id'] in seen and args.wite_allignment_data:
+                    Alignments.align_write('{}_alignments.txt'.format(organism), raw_alignment_data)
+                seen.add(p['id'])
+
+                alignment_values = Alignments.align_file_parse(p['position'], string=raw_alignment_data)
+                peptides[i][str(organism) + '_conserved'] = alignment_values[2]
 
                 # for comparative organism analyze Uniprot entry of best blast hit
                 if organism == args.defined_organism.lower():
@@ -124,28 +149,26 @@ def main():
                         else:
                             position = alignment_values[3]
                         Organism_data = UniProt.ExPasy_alt(alignment_values[0], position)
-                        file_input[i][args.defined_organism + '_id'] = alignment_values[0]
-                        file_input[i][args.defined_organism + '_evalue'] = alignment_values[1]
-                        file_input[i][args.defined_organism + '_description'] = Organism_data[0]
-                        file_input[i][args.defined_organism + '_position'] = str(alignment_values[3])
-                        file_input[i][args.defined_organism + '_function'] = Organism_data[1]
+                        peptides[i][args.defined_organism + '_id'] = alignment_values[0]
+                        peptides[i][args.defined_organism + '_evalue'] = alignment_values[1]
+                        peptides[i][args.defined_organism + '_description'] = Organism_data[0]
+                        peptides[i][args.defined_organism + '_position'] = str(alignment_values[3])
+                        peptides[i][args.defined_organism + '_function'] = Organism_data[1]
                     else:
-                        file_input[i][args.defined_organism + '_id'] = ''
-                        file_input[i][args.defined_organism + '_evalue'] = ''
-                        file_input[i][args.defined_organism + '_description'] = ''
-                        file_input[i][args.defined_organism + '_position'] = ''
-                        file_input[i][args.defined_organism + '_function'] = ''
-                else:
-                    pass
+                        peptides[i][args.defined_organism + '_id'] = ''
+                        peptides[i][args.defined_organism + '_evalue'] = ''
+                        peptides[i][args.defined_organism + '_description'] = ''
+                        peptides[i][args.defined_organism + '_position'] = ''
+                        peptides[i][args.defined_organism + '_function'] = ''
 
     # file output
     output = open(path + 'Cysteine_annotation.tsv', 'w')
     output.write(MSParser.output(header[0], organism_list, args.defined_organism))
-    for peptide in peptides:
-        output.write(MSParser.output(peptide, organism_list, args.defined_organism))
-        for protein in proteins:
-            if protein['index'].strip() == peptide['index'].strip():
-                output.write(MSParser.output(protein, organism_list, args.defined_organism))
+    for cysteine in cysteines:
+        output.write(MSParser.output(cysteine, organism_list, args.defined_organism))
+        for peptide in peptides:
+            if peptide['index'].strip() == cysteine['index'].strip():
+                output.write(MSParser.output(peptide, organism_list, args.defined_organism))
             else:
                 pass
     output.close()

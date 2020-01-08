@@ -67,7 +67,7 @@ def make_request(uniprot_id, verbose = True, n_retry = 10):
     return ret
 
 
-def get_uniprot_records(ids, parallel):
+def get_uniprot_records(ids, parallel, verbose=False):
     '''
     Get a dict of UniProt records.
 
@@ -85,17 +85,18 @@ def get_uniprot_records(ids, parallel):
     '''
 
     #calculate number of threads required
-    _nThread = int(1)
-    listLen = len(ids)
-    cpuCount = cpu_count()
-    _nThread = cpuCount if cpuCount < listLen else listLen
+    if parallel:
+        _nThread = int(1)
+        listLen = len(ids)
+        cpuCount = cpu_count()
+        _nThread = cpuCount if cpuCount < listLen else listLen
+    else:
+        _nThread = 1
 
     sys.stdout.write('Searching for data with {} thread(s)...\n'.format(_nThread))
     ret = list()
-    #for i in ids:
-    #    ret.append(make_request(i))
     with Pool(processes=_nThread) as pool:
-        ret = list(tqdm(pool.imap(functools.partial(make_request, verbose = False), ids),
+        ret = list(tqdm(pool.imap(functools.partial(make_request, verbose=verbose), ids),
                              total = listLen,
                              miniters=1,
                              file = sys.stdout))
