@@ -118,7 +118,7 @@ def main():
         sys.stderr.write('ERROR: No peptides found in {}!\n\tExiting...\n'.format(args.input_file))
         return -1
 
-    sys.stdout.write('\nRetreiving protein Uniprot records.\n')
+    sys.stdout.write('\nRetreiving protein Uniprot records...\n')
     record_dict = UniProt.get_uniprot_records(uniuque_ids, _nThread, verbose=args.verbose)
 
     seq_written=False
@@ -145,7 +145,7 @@ def main():
         sequences[peptides[i]['id']] = UniProt_data[3]
 
     # Replace alignment files with empty string so they won't be continuously overwritten
-    if args.wite_alignment_data:
+    if args.wite_alignment_data and args.align:
         for organism in organism_list:
             with open('{}_alignments.txt'.format(organism), 'w') as outF:
                 outF.write('')

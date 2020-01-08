@@ -116,7 +116,7 @@ def protein_location(record):
                 pro_location += item.split(':')[1]
         else:
             pass
-    return str(pro_location)
+    return str(pro_location).strip()
 
 
 def cys_position(record, sequence, location):
@@ -149,6 +149,7 @@ def cys_function(record, position):
 
     return cys_function
 
+
 def ExPasy(id, sequence, location, record):
     position = ''
     function = ''
@@ -165,6 +166,7 @@ def ExPasy(id, sequence, location, record):
     else:
         position = 'Bad ID'
     return organism, position, function, full_sequence, pro_location
+
 
 def ExPasy_alt(id, position, record):
     protein = ''
