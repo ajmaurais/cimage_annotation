@@ -6,7 +6,7 @@ import sys
 import argparse
 from multiprocessing import cpu_count
 
-from .submodules import MSParser, UniProt, Blast, Alignments, Fasta
+from .submodules import MSParser, UniProt, Blast, Alignments, Fasta, parent_parser
 
 PROG_VERSION=2.0
 SEQ_PATH='sequences.fasta'
@@ -34,31 +34,8 @@ def parse_input(fname, file_type, defined_organism):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog = 'cimage_annotation',
+    parser = argparse.ArgumentParser(prog = 'cimage_annotation', parents=[parent_parser.PARENT_PARSER],
                                      description = 'Annotate functional cysteine residues in cimage output.')
-
-    parser.add_argument('-f', '--file_type', default = 'cimage', choices=['cimage','dtaselect'],
-                        help='Choose input file format. cimage is the default.')
-
-    parser.add_argument('-s', '--write_seq', default = False, action='store_true',
-                        help='Write protein sequences in input to fasta file?')
-
-    parser.add_argument('--ofname', default='Cysteine_annotation.tsv',
-                        help='Name of file to write results to.')
-
-    parser.add_argument('-a', '--align', choices=[0,1], type=int, default=0,
-                        help='Choose whether to balast protein sequences to determine cysteine conservation. '
-                             'If this option is specified, a database dir must also be specified with the --database_dir option. '
-                             '0 is the default.')
-
-    parser.add_argument('-w', '--write_alignment_data', choices=[0,1], type=int, default=0,
-                        help='Choose whether to write alignment data. '
-                             '0 is the default.')
-
-    parser.add_argument('-d', '--database_dir', type = str,
-                        help = 'Path to directory containing sequence databases to use for alignment.')
-
-    parser.add_argument('-o', '--defined_organism', default='none', type=str)
 
     parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
@@ -68,11 +45,6 @@ def main():
     parser.add_argument('-t', '--nThread', type=int, default=None,
                         help='Chose how many threads to use for parllel processing.'
                         'This option overrides the --parallel option.')
-
-    parser.add_argument('-v', '--verbose', default=False, action='store_true',
-                        help='Print verbose output?')
-
-    parser.add_argument('input_file', type = str, help = 'Path to input file.')
 
     args = parser.parse_args()
 
