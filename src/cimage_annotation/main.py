@@ -51,9 +51,9 @@ def main():
                              'If this option is specified, a database dir must also be specified with the --database_dir option. '
                              '0 is the default.')
 
-    parser.add_argument('-w', '--wite_alignment_data', choices=[0,1], type=int, default=1,
+    parser.add_argument('-w', '--write_alignment_data', choices=[0,1], type=int, default=0,
                         help='Choose whether to write alignment data. '
-                             '1 is the default.')
+                             '0 is the default.')
 
     parser.add_argument('-d', '--database_dir', type = str,
                         help = 'Path to directory containing sequence databases to use for alignment.')
@@ -76,7 +76,7 @@ def main():
 
     args = parser.parse_args()
 
-    sys.stdout.write('cimage_annotation v{}\n'.format(PROG_VERSION))
+    sys.stdout.write('\ncimage_annotation v{}\n'.format(PROG_VERSION))
 
     # Manually check args.
     if args.align and args.database_dir is None:
@@ -145,14 +145,17 @@ def main():
         sequences[peptides[i]['id']] = UniProt_data[3]
 
     # Replace alignment files with empty string so they won't be continuously overwritten
-    if args.wite_alignment_data and args.align:
-        for organism in organism_list:
-            with open('{}_alignments.txt'.format(organism), 'w') as outF:
-                outF.write('')
-
-    if args.align:
+    if args.write_alignment_data and args.align:
         # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
         sys.stdout.write('\nAlligning protein sequences to determine cysteine conservation...\n')
+        for organism in organism_list:
+            align_fname = '{}_alignments.txt'.format(organism)
+            sys.stdout.write('\tCreating {}...'.format(align_fname))
+            with open(align_fname, 'w') as outF:
+                outF.write('')
+            sys.stdout.write('Done!\n')
+
+    if args.align:
         alignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
                                               nThread=_nThread, verbose=args.verbose)
 
@@ -160,7 +163,7 @@ def main():
         for i, p in enumerate(peptides):
             for organism in organism_list:
                 raw_alignment_data = alignment_data[p['id']][organism]
-                if p['id'] in seen and args.wite_alignment_data:
+                if p['id'] in seen and args.write_alignment_data:
                     Alignments.align_write('{}_alignments.txt'.format(organism), raw_alignment_data)
                 seen.add(p['id'])
 
@@ -195,7 +198,7 @@ def main():
             for peptide in peptides:
                 if peptide['index'].strip() == cysteine['index'].strip():
                     outF.write(MSParser.output(peptide, organism_list, args.defined_organism))
-    sys.stdout.write('Results written to {}\n\n'.format(args.ofname))
+    sys.stdout.write('\nResults written to {}\n\n'.format(args.ofname))
 
 
 if __name__ == '__main__':

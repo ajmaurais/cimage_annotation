@@ -1,4 +1,5 @@
 
+import sys
 import re
 
 
@@ -20,8 +21,14 @@ def write_fasta_entry(fname, acession, sequence, description = '', append = True
         Should `fname` be overwritten or appended to?
     '''
 
+    if not append:
+        sys.stdout.write('Creating {}...'.format(fname))
+
     with open(fname, 'a' if append else 'w') as outF:
         outF.write('\n>sp|{}|{}\n{}'.format(acession, description, sequence))
+
+    if not append:
+        sys.stdout.write('Done!\n')
 
 
 class FastaFile(object):
