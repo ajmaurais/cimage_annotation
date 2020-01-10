@@ -20,7 +20,7 @@ def makePBS(mem, ppn, walltime, wd, cimage_annotation_args):
         outF.write('#PBS -l mem={}gb,nodes=1:ppn={},walltime={}\n\n'.format(mem, ppn, walltime))
         outF.write('{} {}\n\n'.format(PBS_MODULE_LOAD_COMMAND, BLAST_PBS_VERSION))
         outF.write('cd {}\n'.format(wd))
-        outF.write('{} {} {}\n'.format(CIMAGE_ANNOTATION_EXE, _flags, cimage_annotation_args['input_file']))
+        outF.write('{} {} {} > cimage_annotation_out.txt\n'.format(CIMAGE_ANNOTATION_EXE, _flags, cimage_annotation_args['input_file']))
 
     sys.stdout.write('Done!\n')
     return pbsName
@@ -58,7 +58,7 @@ def main():
     #get wd
     wd = os.path.dirname(os.path.abspath(args.input_file))
 
-    cimage_annotation_args = {arg: getattr(parent_args, arg) for arg in vars(parent_args)}
+    cimage_annotation_args = {arg: getattr(args, arg) for arg in vars(parent_args)}
     pbsName = makePBS(args.mem, args.ppn, args.walltime, wd, cimage_annotation_args)
     command = 'qsub {}'.format(pbsName)
     if args.verbose:
