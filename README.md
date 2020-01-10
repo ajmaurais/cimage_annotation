@@ -68,6 +68,7 @@ cd ~/local/cimage_annotation
 ```bash
 mkdir -p ~/bin
 ln -s ~/local/cimage_annotation/venv/bin/cimage_annotation ~/bin
+ln -s ~/local/cimage_annotation/venv/bin/qsub_cimage_annotation ~/bin
 ```
 
 6\. Log out and log back in to apply the changes to your shell environment. Once you log back in, check that the `cimage_annotation` command is recognized by your shell. Running the command `which cimage_annotation` should output: `~/bin/cimage_annotation`
