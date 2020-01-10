@@ -6,8 +6,8 @@ PARENT_PARSER = argparse.ArgumentParser(add_help=False)
 PARENT_PARSER.add_argument('-f', '--file_type', default = 'cimage', choices=['cimage','dtaselect'],
                     help='Choose input file format. cimage is the default.')
 
-PARENT_PARSER.add_argument('-s', '--write_seq', default = False, action='store_true',
-                    help='Write protein sequences in input to fasta file?')
+PARENT_PARSER.add_argument('-s', '--write_seq', choices=[0,1], type=int, default=0,
+                    help='Write protein sequences in input to fasta file? 0 is the default.')
 
 PARENT_PARSER.add_argument('--ofname', default='Cysteine_annotation.tsv',
                     help='Name of file to write results to.')
@@ -26,7 +26,8 @@ PARENT_PARSER.add_argument('-d', '--database_dir', type = str,
 
 PARENT_PARSER.add_argument('-o', '--defined_organism', default='none', type=str)
 
-PARENT_PARSER.add_argument('-v', '--verbose', default=False, action='store_true',
+PARENT_PARSER.add_argument('-v', '--verbose', choices=[0,1], type=int, default=0,
                     help='Print verbose output?')
 
 PARENT_PARSER.add_argument('input_file', type = str, help = 'Path to input file.')
+
