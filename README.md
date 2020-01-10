@@ -2,11 +2,28 @@
 Functional cysteine annotation
 
 # Usage
+There are two executable scripts:
+
+* `cimage_annotation`: Run the annotation program in your current shell.
+* `qsub_cimage_annotation`: Automatically submit the annotation program as a `PBS` job.
+
 ```
 usage: cimage_annotation [-h] [-f {cimage,dtaselect}] [-s] [--ofname OFNAME]
                          [-a {0,1}] [-w {0,1}] [-d DATABASE_DIR]
                          [-o DEFINED_ORGANISM] [-p {0,1}] [-t NTHREAD] [-v]
                          input_file
+
+usage: qsub_cimage_annotation [-h] [-f {cimage,dtaselect}] [-s {0,1}]
+                              [--ofname OFNAME] [-a {0,1}] [-w {0,1}]
+                              [-d DATABASE_DIR] [-o DEFINED_ORGANISM]
+                              [-v {0,1}] [-m MEM] [-p PPN] [-t WALLTIME] [-g]
+                              input_file
+```
+
+You can use the `-h` flag to display a detailed descriptions of all options.
+```bash
+cimage_annotation -h
+qsub_cimage_annotation -h
 ```
 
 # Examples
