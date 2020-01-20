@@ -63,7 +63,6 @@ def output(line_dict, organism_list, defined_organism):
 
     n = 1
     while n < (len(line_dict) - 19):
-        line += (line_dict[n] + '\t')
+        line += ('\t{}'.format(line_dict[n]))
         n += 1
-    line = line.rstrip('\t')
     return line
