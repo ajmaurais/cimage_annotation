@@ -134,7 +134,9 @@ def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=Tr
                                           miniters=1,
                                           file = sys.stdout))
     else:
-        for it in search_list:
+        length = len(search_list)
+        for i, it in enumerate(search_list):
+            sys.stdout.write('Working on {} of {}'.format(i, length))
             results.append(_blastp_worker(it, db=db_path, verbose=verbose))
 
     assert(len(search_list) == len(results))

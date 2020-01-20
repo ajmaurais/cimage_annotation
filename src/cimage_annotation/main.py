@@ -3,6 +3,7 @@ import os
 import os.path
 import sys
 import argparse
+import re
 from multiprocessing import cpu_count
 
 from .submodules import MSParser, UniProt, Blast, Alignments, Fasta, parent_parser
@@ -90,17 +91,19 @@ def main():
         return -1
 
     sys.stdout.write('\nRetreiving protein Uniprot records...\n')
-    record_dict = UniProt.get_uniprot_records(uniuque_ids, _nThread, verbose=args.verbose)
+    record_dict = UniProt.get_uniprot_records(uniuque_ids, _nThread, verbose=args.verbose,
+            show_bar=not(args.verbose and args.parallel==0))
 
     seq_written=False
     for i, p in enumerate(peptides):
         # Get and Parse Uniprot entry for protein
-        UniProt_data = UniProt.ExPasy(p['id'],
-                                      p['sequence'].split('.')[1].split('*')[0] +
-                                      p['sequence'].split('.')[1].split('*')[1],
-                                      p['sequence'].split('.')[1].find('*'),
-                                      record_dict[p['id']])
+        try:
+            seq_temp = re.match('.?\.?([A-z\*]+)\.?/?', p['sequence']).group(1)
+        except AttributeError as e:
+            sys.stdout.write('Error parsing sequence: {}'.format(p['sequence']))
+            continue
 
+        UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p['id']])
         peptides[i]['position'] = UniProt_data[1]   # cysteine position
         peptides[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
         peptides[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
@@ -128,7 +131,8 @@ def main():
 
     if args.align:
         alignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
-                                              nThread=_nThread, verbose=args.verbose)
+                                              nThread=_nThread, verbose=args.verbose,
+                                              show_bar=not(args.verbose and args.parallel==0))
 
         seen=set() # Keep track of seen protein IDs
         for i, p in enumerate(peptides):

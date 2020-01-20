@@ -66,7 +66,7 @@ If you are missing the `venv` directory, something went wrong and the following 
 
 ```bash
 cd ~/local
-git clone --branch swissprot_bugfix https://github.com/ajmaurais/biopython # Clone the biopython repo
+git clone --single-branch --branch master https://github.com/ajmaurais/biopython # Clone the biopython repo
 cd biopython # Navigate to the biopython directory
 ~/local/cimage_annotation/venv/bin/python setup.py build # Run the biopython build script
 ~/local/cimage_annotation/venv/bin/pip install . # Install biopython in your virtual environment
