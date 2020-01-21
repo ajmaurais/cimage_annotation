@@ -118,7 +118,8 @@ def main():
             sys.stdout.write('Error parsing sequence: {}'.format(p['sequence']))
             continue
 
-        UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p['id']])
+        UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p['id']],
+                                      res_sep=args.residue_sep, fxn_sep=args.fxn_sep)
         peptides[i]['position'] = UniProt_data[1]   # cysteine position
         peptides[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
         peptides[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)

@@ -187,7 +187,9 @@ def cys_function(record, position):
     return cys_function
 
 
-def ExPasy(sequence, record, combine_method=1):
+def ExPasy(sequence, record,
+           res_sep='|', fxn_sep='!', combine_method=1):
+
     if combine_method != 1:
         raise NotImplementedError('combine_method {} not implemented.'.format(combine_method))
 
@@ -214,8 +216,9 @@ def ExPasy(sequence, record, combine_method=1):
                 positions.append(str(cys_pos + 1)) # convert to 1 based indexing here
                 functions.append(cys_function(record, cys_pos))
 
-        position='|'.join(positions)
-        function=functions[0] if len(functions) == 1 else '|'.join(['{}:{}'.format(p,s) for p, s in zip(positions,functions)])
+        position = res_sep.join(positions)
+        if ''.join(functions):
+            function=functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p,s) for p, s in zip(positions,functions)])
 
     else:
         position = 'BAD_ID'

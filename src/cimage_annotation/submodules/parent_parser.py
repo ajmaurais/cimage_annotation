@@ -24,6 +24,12 @@ PARENT_PARSER.add_argument('-w', '--write_alignment_data', choices=[0,1], type=i
 PARENT_PARSER.add_argument('-d', '--database_dir', type = str,
                     help = 'Path to directory containing sequence databases to use for alignment.')
 
+PARENT_PARSER.add_argument('--residue_sep', type = str, default='|',
+                    help = 'Residue seperator for peptides with multiple modified residues. Default is \'|\'.')
+
+PARENT_PARSER.add_argument('--fxn_sep', type = str, default='!',
+                    help = 'Function seperator for peptides with multiple modified residues. Default is \'!\'.')
+
 PARENT_PARSER.add_argument('-o', '--defined_organism', default='none', type=str)
 
 PARENT_PARSER.add_argument('-v', '--verbose', choices=[0,1], type=int, default=0,
