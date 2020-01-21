@@ -46,7 +46,22 @@ def main():
                         help='Chose how many threads to use for parllel processing.'
                         'This option overrides the --parallel option.')
 
+    parser.add_argument('--debug', choices=['none', 'pdb', 'pudb'], default='none',
+            help='Start the main method in the selected debuger.')
+
     args = parser.parse_args()
+
+    if args.debug != 'none':
+        assert(args.debug in ['pdb', 'pudb'])
+        if args.debug == 'pdb':
+            import pdb as db
+        elif args.debug == 'pudb':
+            try:
+                import pudb as db
+            except ModuleNotFoundError as e:
+                sys.stderr.write('pudb is not installed.')
+                return -1
+        db.set_trace()
 
     sys.stdout.write('\ncimage_annotation v{}\n'.format(PROG_VERSION))
 
@@ -118,7 +133,7 @@ def main():
                 seq_written = True
         sequences[peptides[i]['id']] = UniProt_data[3]
 
-    # Replace alignment files with empty string so they won't be continuously overwritten
+    # Replace alignment files with empty string so they won't be continuously appended to.
     if args.write_alignment_data and args.align:
         # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
         sys.stdout.write('\nAlligning protein sequences to determine cysteine conservation...\n')
