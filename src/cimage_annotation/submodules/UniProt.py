@@ -49,15 +49,10 @@ def make_request(uniprot_id, verbose = True, n_retry = 10):
     for i in range(n_iter):
         try:
             handle = ExPASy.get_sprot_raw(uniprot_id)
-        except HTTPError as e:
-            if e.getcode() >= 400:
-                if verbose:
-                    sys.stderr.write('No UniProt page found for {}\n\tStatus code: {}\n'.format(uniprot_id, e.getcode()))
-                break
-            else:
-                if verbose:
-                    sys.stderr.write('Retry {} of {} for {}\n\t{}\n'.format(i, n_iter, uniprot_id, e))
-                continue
+        except ValueError as e:
+            if verbose:
+                sys.stderr.write('No UniProt page found for {}\n'.format(uniprot_id))
+            break
         except (BadStatusLine, URLError) as e:
             if verbose:
                 sys.stderr.write('Retry {} of {} for {}\n\t{}\n'.format(i, n_iter, uniprot_id, e))
@@ -109,7 +104,7 @@ def get_uniprot_records(ids, nThread, verbose=False, show_bar=True):
     else:
         length = len(ids)
         for i, it in enumerate(ids):
-            sys.stdout.write('Working on {} of {}'.format(i, length))
+            sys.stdout.write('Working on {} of {}\n'.format(i, length))
             make_request(it, verbose=verbose)
 
     assert(len(ids) == len(ret))
