@@ -184,22 +184,29 @@ def main():
 
                 # for comparative organism analyze Uniprot entry of best blast hit
                 if organism == args.defined_organism.lower():
-                    org_dict_temp = {x: list() for x in ['id', 'evalue', 'description', 'position', 'function']}
+                    org_dict_temp = {x: '' for x in ['id', 'evalue', 'description', 'position', 'function']}
 
                     id_temp = alignment_data[p['id']][organism].get_best_id()
-                    org_dict_temp['id'].append(id_temp)
-                    org_dict_temp['description'].append(alignment_data[p['id']][organism].get_best_description())
+                    org_dict_temp['id'] = id_temp
+                    org_dict_temp['description'] = alignment_data[p['id']][organism].get_best_description()
                     if id_temp != '':
-                        org_dict_temp['evalue'].append(alignment_data[p['id']][organism].get_best_evalue())
-                        if org_dict_temp['evalue'][0] <= args.evalue_co:
+                        org_dict_temp['evalue'] = alignment_data[p['id']][organism].get_best_evalue()
+                        if org_dict_temp['evalue'] <= args.evalue_co:
+
+                            positions_temp = list()
+                            functions_temp = list()
                             for pos in p['position'].split(args.residue_sep):
                                 homolog_position = alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
-                                org_dict_temp['position'].append(homolog_position)
+                                positions_temp.append(str(homolog_position))
+                                functions_temp.append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
 
-                                org_dict_temp['function'].append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
-
-                    # concatenate alignment data
-                    org_dict_temp = {k: args.residue_sep.join([str(x) for x in v]) for k, v in org_dict_temp.items()}
+                        org_dict_temp['position'] = args.residue_sep.join(positions_temp)
+                        if ''.join(functions_temp):
+                            if len(functions_temp) == 1:
+                                org_dict_temp['function'] = functions_temp[0]
+                            else:
+                                org_dict_temp['function'] = args.fxn_sep.join(['{}:{}'.format(p,s) for p, s in zip(positions_temp,
+                                                                                                                   functions_temp)])
 
                     # add alignment data to peptides
                     for k, v in org_dict_temp.items():
