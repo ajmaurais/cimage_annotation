@@ -1,4 +1,3 @@
-#! /usr/bin/env/ python
 
 import sys
 import os
@@ -187,8 +186,7 @@ def cys_function(record, position):
     return cys_function
 
 
-def ExPasy(sequence, record,
-           res_sep='|', fxn_sep='!', combine_method=1):
+def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
 
     if combine_method != 1:
         raise NotImplementedError('combine_method {} not implemented.'.format(combine_method))
@@ -223,18 +221,4 @@ def ExPasy(sequence, record,
     else:
         position = 'BAD_ID'
     return organism, position, function, full_sequence, pro_location
-
-
-def ExPasy_alt(id, position, record):
-    protein = ''
-    function = ''
-
-    if record is not None:
-        protein = record.description
-        function = cys_function(record, position)
-
-    else:
-        protein = 'Bad ID'
-
-    return protein, function
 
