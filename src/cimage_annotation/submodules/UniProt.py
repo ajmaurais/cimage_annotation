@@ -1,8 +1,8 @@
-#! /usr/bin/env/ python
 
 import sys
 import os
 import os.path
+import re
 from urllib.error import URLError, HTTPError
 from http.client import BadStatusLine
 from multiprocessing.pool import ThreadPool as Pool
@@ -48,15 +48,10 @@ def make_request(uniprot_id, verbose = True, n_retry = 10):
     for i in range(n_iter):
         try:
             handle = ExPASy.get_sprot_raw(uniprot_id)
-        except HTTPError as e:
-            if e.getcode() >= 400:
-                if verbose:
-                    sys.stderr.write('No UniProt page found for {}\n\tStatus code: {}\n'.format(uniprot_id, e.getcode()))
-                break
-            else:
-                if verbose:
-                    sys.stderr.write('Retry {} of {} for {}\n\t{}\n'.format(i, n_iter, uniprot_id, e))
-                continue
+        except ValueError as e:
+            if verbose:
+                sys.stderr.write('No UniProt page found for {}\n'.format(uniprot_id))
+            break
         except (BadStatusLine, URLError) as e:
             if verbose:
                 sys.stderr.write('Retry {} of {} for {}\n\t{}\n'.format(i, n_iter, uniprot_id, e))
@@ -67,7 +62,7 @@ def make_request(uniprot_id, verbose = True, n_retry = 10):
     return ret
 
 
-def get_uniprot_records(ids, nThread, verbose=False):
+def get_uniprot_records(ids, nThread, verbose=False, show_bar=True):
     '''
     Get a dict of UniProt records.
 
@@ -77,6 +72,10 @@ def get_uniprot_records(ids, nThread, verbose=False):
         List of uniprot ids to retrieve.
     nThread: int
         Specify how many threads to use to retrieve Uniprot records.
+    verbose: bool
+        Verbose output?
+    show_bar: bool
+        Shouold status bar be shown?
 
     Return
     ------
@@ -95,11 +94,17 @@ def get_uniprot_records(ids, nThread, verbose=False):
 
     sys.stdout.write('Searching for data with {} thread(s)...\n'.format(_nThread))
     ret = list()
-    with Pool(processes=_nThread) as pool:
-        ret = list(tqdm(pool.imap(functools.partial(make_request, verbose=verbose), ids),
-                             total = listLen,
-                             miniters=1,
-                             file = sys.stdout))
+    if show_bar:
+        with Pool(processes=_nThread) as pool:
+            ret = list(tqdm(pool.imap(functools.partial(make_request, verbose=verbose), ids),
+                                 total = listLen,
+                                 miniters=1,
+                                 file = sys.stdout))
+    else:
+        length = len(ids)
+        for i, it in enumerate(ids):
+            sys.stdout.write('Working on {} of {}\n'.format(i, length))
+            make_request(it, verbose=verbose)
 
     assert(len(ids) == len(ret))
     return {k: record for k, record in zip(ids, ret)}
@@ -108,41 +113,72 @@ def get_uniprot_records(ids, nThread, verbose=False):
 def protein_location(record):
     pro_location = ''
     for item in record.comments:
-
         if item.split(':')[0] == 'SUBCELLULAR LOCATION':
             if item.split(':')[1].strip().split(' ')[0] == 'Isoform':
                 pro_location += item.split(':')[2]
             else:
                 pro_location += item.split(':')[1]
-        else:
-            pass
     return str(pro_location).strip()
 
 
-def cys_position(record, sequence, location):
-    peptide_location = str(record.sequence).find(sequence)
-    if str(peptide_location) == str(-1):
-        cys_location = 0
-    else:
-        cys_location = peptide_location + location
+def cys_position(protein_seq, peptide_seq, mod_loc):
+    '''
+    Get the position of a cysteine in a parent protein.
 
-    return str(cys_location)
+    Paramaters
+    ----------
+    protein_seq: str
+        Full parent protein sequence.
+    peptide_seq: str
+        Peptide sequence (Modifications are removed automatically if they are present.)
+    mod_loc: int
+        Index of cysteine position in parent protein.
+
+    Returns
+    -------
+    cys_loc: int
+        Cysteine location in parent protein. (Starting from index 0.)
+    '''
+
+    _peptide_seq = peptide_seq.replace('*', '')
+    peptide_start = str(protein_seq).find(_peptide_seq)
+    if str(peptide_start) == str(-1):
+        cys_loc = -1
+    else:
+        cys_loc = peptide_start + mod_loc
+
+    return cys_loc
 
 
 def cys_function(record, position):
-    cys_function = ''
+    '''
+    Get residue function annotation at `position` if it exists in `record`.
 
+    Paramaters
+    ----------
+    position: int
+        Index (starting from 0) of the residue of interest.
+    record: Bio.SwissProt.Record
+        Record to get data from.
+
+    Returns
+    -------
+    cys_function: str
+        Annotaton for cysteine function.
+    '''
+
+    cys_function = ''
     for feature in record.features:
         try:
             if feature.type.upper() == 'DISULFID' and \
                str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
-               int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
+               int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
                 cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
 
             elif feature.type.upper() in features_list and \
                  str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
                  (int(feature.location.end) - int(feature.location.start)) <= 10 and \
-                 int(position) >= int(feature.location.start) and int(position) <= int(feature.location.end):
+                 int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
                 cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
         except TypeError as e:
             continue
@@ -150,7 +186,12 @@ def cys_function(record, position):
     return cys_function
 
 
-def ExPasy(id, sequence, location, record):
+def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
+
+    if combine_method != 1:
+        raise NotImplementedError('combine_method {} not implemented.'.format(combine_method))
+
+    seq_no_mod = sequence.replace('*', '')
     position = ''
     function = ''
     organism = ''
@@ -160,24 +201,24 @@ def ExPasy(id, sequence, location, record):
     if record is not None:
         organism = record.organism
         pro_location = protein_location(record)
-        position = cys_position(record, sequence, location)
-        function = cys_function(record, position)
         full_sequence = record.sequence
+
+        positions=list()
+        functions=list()
+        for i, x in enumerate(re.finditer('\*', sequence)):
+            mod_loc = x.start()-(i+1)
+            cys_pos = cys_position(full_sequence, seq_no_mod, mod_loc)
+            if cys_pos == -1:
+                positions.append('RESIDUE_NOT_FOUND')
+            else:
+                positions.append(str(cys_pos + 1)) # convert to 1 based indexing here
+                functions.append(cys_function(record, cys_pos))
+
+        position = res_sep.join(positions)
+        if ''.join(functions):
+            function=functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p,s) for p, s in zip(positions,functions)])
+
     else:
-        position = 'Bad ID'
+        position = 'BAD_ID'
     return organism, position, function, full_sequence, pro_location
-
-
-def ExPasy_alt(id, position, record):
-    protein = ''
-    function = ''
-
-    if record is not None:
-        protein = record.description
-        function = cys_function(record, position)
-
-    else:
-        protein = 'Bad ID'
-
-    return protein, function
 

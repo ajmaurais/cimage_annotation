@@ -1,4 +1,3 @@
-#! /usr/bin/env/ python
 
 PRINT_COLS=['index', 'id', 'symbol', 'description', 'protein_location', 'sequence', 'mass', 'position', 'cys_function']
 ALLIGNMENT_COLUMNS = ['id', 'evalue', 'description', 'position', 'function']
@@ -59,11 +58,11 @@ def output(line_dict, organism_list, defined_organism):
 
     for organism in organism_list:
         line += '\t{}'.format(line_dict[organism + '_conserved'])
-    line += '\t'.join([line_dict['{}_{}'.format(defined_organism, x)] for x in ALLIGNMENT_COLUMNS])
+    line += '\t'
+    line += '\t'.join([str(line_dict['{}_{}'.format(defined_organism, x)]) for x in ALLIGNMENT_COLUMNS])
 
     n = 1
     while n < (len(line_dict) - 19):
-        line += (line_dict[n] + '\t')
+        line += ('\t{}'.format(line_dict[n]))
         n += 1
-    line = line.rstrip('\t')
     return line

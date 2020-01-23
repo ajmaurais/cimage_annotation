@@ -1,4 +1,3 @@
-#! /usr/bin/env/ python
 
 import sys
 import os
@@ -23,9 +22,8 @@ def blastp(organism, database_path, query, verbose=False):
     cmd = 'echo "{}"| {}'.format(query, exe)
     cmd += ' -query /dev/stdin'
     cmd += ' -db {}'.format(_db_path)
-    cmd += ' -outfmt ' + '0'
-    cmd += ' -num_alignments ' + '5'
-    cmd += ' -num_descriptions ' + '5'
+    cmd += ' -outfmt ' + '5'
+    cmd += ' -num_alignments {}'.format(5)
 
     if verbose:
         sys.stdout.write('\n{}\n'.format(cmd))

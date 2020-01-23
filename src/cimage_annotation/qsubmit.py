@@ -34,20 +34,20 @@ def getPlurality(num):
 
 def main():
 
-    parser = argparse.ArgumentParser(prog = 'qsub_cimage_annotation', parents=[parent_parser.PARENT_PARSER],
-                                     description = 'Submit cimage_annotation job to the queue.')
+    parser = argparse.ArgumentParser(prog='qsub_cimage_annotation', parents=[parent_parser.PARENT_PARSER],
+                                     description='Submit cimage_annotation job to the queue.')
 
-    parser.add_argument('-m', '--mem', default=4, type = int,
-                        help = 'Amount of memory to allocate per PBS job in gb. Default is 4.')
+    parser.add_argument('-m', '--mem', default=4, type=int,
+                        help='Amount of memory to allocate per PBS job in gb. Default is 4.')
 
     parser.add_argument('-p', '--ppn', default=8, type=int,
                         help='Number of processors to allocate per PBS job. Default is 8.')
 
     parser.add_argument('-t', '--walltime', default='12:00:00',
-                        help = 'Walltime per job in the format hh:mm:ss. Default is 12:00:00.')
+                        help='Walltime per job in the format hh:mm:ss. Default is 12:00:00.')
 
-    parser.add_argument('-g', '--go', action = 'store_true', default = False,
-                        help = 'Should jobs be submitted? If this flag is not supplied, program will be a dry run. '
+    parser.add_argument('-g', '--go', action='store_true', default=False,
+                        help='Should jobs be submitted? If this flag is not supplied, program will be a dry run. '
                                '.pbs file will printed but jobs will not be submitted.')
 
     args = parser.parse_args()
@@ -70,3 +70,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
