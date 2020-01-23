@@ -59,6 +59,7 @@ def main():
     wd = os.path.dirname(os.path.abspath(args.input_file))
 
     cimage_annotation_args = {arg: getattr(args, arg) for arg in vars(parent_args)}
+    cimage_annotation_args['nThread'] = args.ppn * 2
     pbsName = makePBS(args.mem, args.ppn, args.walltime, wd, cimage_annotation_args)
     command = 'qsub {}'.format(pbsName)
     if args.verbose:
