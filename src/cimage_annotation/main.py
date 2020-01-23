@@ -196,7 +196,7 @@ def main():
                                 homolog_position = alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
                                 org_dict_temp['position'].append(homolog_position)
 
-                                org_dict_temp['function'].append(UniProt.cys_function(org_record_dict[id_temp], homolog_position))
+                                org_dict_temp['function'].append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
 
                     # concatenate alignment data
                     org_dict_temp = {k: args.residue_sep.join([str(x) for x in v]) for k, v in org_dict_temp.items()}
