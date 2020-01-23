@@ -1,7 +1,7 @@
-#! usr/bin/env/ python
 
 import sys
 import re
+import xml.etree.ElementTree as ET
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 import itertools
@@ -10,100 +10,209 @@ import functools
 
 from .Blast import blastp
 
-UNIPROT_RE = '[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}'
 
-def align_write(fname, dat):
-    with open(fname, 'a') as outF:
-        outF.write(dat + '\n\n\n\n\n\n')
+class Alignment(object):
+    '''
+    Read BLAST XML file and provide methods to acess underlying alignment data.
+    '''
 
+    def __init__(self, raw_xml):
+        '''
+        Default constructor
 
-def align_file_parse(position, path=None, string=None):
+        Parameters
+        ----------
+        raw_xml: str
+            BLAST XML file as text.
+        '''
 
-    if sum([bool(x) for x in [path, string]]) != 1:
-        raise RuntimeError('path xor string must be specified!')
-
-    # get arg for text to process
-    if path is not None:
-        f = open(path + 'alignment.txt', 'r')
-        align = f.read()
-        f.close()
-    elif string is not None:
-        align=string
-
-    conserved = ''
-    id = ''
-    evalue = ''
-    homolog_position = ''
-    seq_list = []
-    if len(align.split('\n\n')) < 9:
-        conserved = 'Error'
-    else:
-        align_header = align.split('\n\n')[7]
-
-        if align_header.strip() == '***** No hits found *****':
-            conserved = '--'
+        if raw_xml:
+            self._tree = ET.fromstring(raw_xml)
+            self._best_hit = self._tree.find('.//Iteration_hits/Hit')
+            self._hsp = None
+            assert(self._best_hit is not None)
+            self._empty = False
         else:
-            aligned_proteins = align_header.split('\n')
+            self._empty = True
 
-            r = '^([ts][rp]\|){0,1}(' + UNIPROT_RE + ').*\s+([\d\.\-e]+)\s*$'
-            match = re.search(r, aligned_proteins[0])
-            if not match:
-                raise RuntimeError('Failed to parse aligned_proteins!\n\tFailed on value: {}'.format(aligned_proteins[0]))
-            id = match.group(2)
-            evalue = match.group(4)
 
-            if float(evalue) > float('1e-5'):
-                conserved = '--'
+    @staticmethod
+    def from_string(raw_xml):
+        if raw_xml == '':
+            return None
+        return Alignment(raw_xml)
+
+
+    def _get_hit_path_text(self, path):
+        temp = self._best_hit.find(path)
+        return None if temp is None else temp.text
+
+
+    def get_best_id(self):
+        '''
+        Get acession of best alignmant match.
+
+        Returns
+        -------
+        best_id: str
+        '''
+        if self._empty:
+            return ''
+        return self._get_hit_path_text('./Hit_accession')
+
+
+    def get_best_description(self):
+        '''
+        Get description of best alignmant match.
+
+        Returns
+        -------
+        best_description: str
+        '''
+        if self._empty:
+            return ''
+        return self._get_hit_path_text('./Hit_def')
+
+
+    def get_best_evalue(self):
+        '''
+        Get evalue of best alignment.
+
+        Returns
+        -------
+        evalue: float
+        '''
+        if self._empty:
+            return None
+        return float(self._get_hit_path_text('./Hit_hsps/Hsp/Hsp_evalue'))
+
+
+    def _populate_hsp(self):
+        self._hsp = {x.tag: x.text for x in self._best_hit.findall('./Hit_hsps/Hsp/')}
+
+        self._hsp['hit_seq_map'] = list()
+        seq_index = 0
+        for i, c in enumerate(self._hsp['Hsp_hseq']):
+            self._hsp['hit_seq_map'].append(seq_index)
+            if re.match('[A-Za-z]', c):
+                seq_index += 1
+
+        self._hsp['query_seq_map'] = list()
+        for i, c in enumerate(self._hsp['Hsp_qseq']):
+            if re.match('[A-Za-z]', c):
+                self._hsp['query_seq_map'].append(i)
+
+        # make the things which need to be numbers, numbers
+        for entry in ('Hsp_hit-to', 'Hsp_hit-from', 'Hsp_query-to', 'Hsp_query-from'):
+            self._hsp[entry] = int(self._hsp[entry])
+        self._hsp['Hsp_evalue'] = float(self._hsp['Hsp_evalue'])
+
+
+    def conserved_at_position(self, pos):
+        '''
+        Determine whether residue at `pos` is conserved in hit sequence.
+
+        Returns
+        -------
+        conserved: bool
+            True if conserved.
+        '''
+
+        if self._empty:
+            return False
+
+        # populate self._hsp with dict of dat from best hit
+        if self._hsp is None:
+            self._populate_hsp()
+
+        if pos < self._hsp['Hsp_query-from'] or pos > self._hsp['Hsp_query-to']:
+            return False
+
+        align_index = pos - self._hsp['Hsp_query-from']
+        query_index = self._hsp['query_seq_map'][align_index]
+        if query_index == -1:
+            return False
+        query_residue = self._hsp['Hsp_qseq'][query_index]
+        hit_residue = self._hsp['Hsp_hseq'][query_index]
+        sys.stdout.write('{}: {} == {} -> {}\n'.format(pos, query_residue, hit_residue, (hit_residue == query_residue)))
+
+        return hit_residue == query_residue
+
+
+    def alignment_at_position(self, pos):
+        '''
+        Get alignment at specified position in query sequence.
+
+        Parameters
+        ----------
+        pos: int
+            Index of query position of interest. (starting from 1)
+
+        Returns
+        -------
+        residue, position: str, int
+            Residue at `pos` and position in aligned sequence.
+            If no match, returns None, None.
+        '''
+
+        if self._empty:
+            return None, None
+
+        # populate self._hsp with dict of dat from best hit
+        if self._hsp is None:
+            self._populate_hsp()
+
+        if pos < self._hsp['Hsp_query-from'] or pos > self._hsp['Hsp_query-to']:
+            return None, None
+
+        align_index = pos - self._hsp['Hsp_query-from']
+        res_temp = self._hsp['Hsp_hseq'][align_index]
+
+        # res_temp is gap, return None, None
+        if not re.match('[A-Za-z]', res_temp):
+            return None, None
+        pos_temp = self._hsp['hit_seq_map'][align_index] + self._hsp['Hsp_hit-from']
+
+        return res_temp, pos_temp
+
+
+    def write(self, fname, file_format='txt', mode='w'):
+        '''
+        Write alignment data to file or output stream.
+
+        Parameters
+        ----------
+        fname: str
+            File name to write to.
+        file_format: str
+            One of 'txt' or 'xml'.
+        mode: str
+            Specify write mode. One of 'w', 'a'.
+        '''
+
+        # Check arguments
+        if mode not in ['a', 'w']:
+            raise RuntimeError('{} is an invalid mode.'.format(mode))
+
+        if self._empty:
+            return
+
+        with open(fname, mode) as outF:
+            if file_format == 'txt':
+                # print header
+                raise NotImplementedError('txt method not implemented yet...\nUse xml instead.')
+            elif file_format == 'xml':
+                outF.write(ET.tostring(self._tree, encoding='unicode'))
+                if mode == 'a':
+                    outF.write('\n')
             else:
-
-                align_data = align.split('>')[1].split('\n\n\n')[0].split('\n\n')
-
-                for item in align_data:
-                    if item[:5] == 'Query':
-                        query = item.split('\n')[0].split()
-                        subject = item.split('\n')[2].split()
-
-                        if int(position) >= int(query[1]) and int(position) <= int(query[3]):
-                            m = int(query[1])
-                            n = int(subject[1])
-                            i = 0
-                            while i < len(query[2]):
-                                if query[2][i] == '-':
-                                    a = m
-                                else:
-                                    a = m
-                                    m += 1
-                                if subject[2][i] == '-':
-                                    b = n
-                                else:
-                                    b = n
-                                    n += 1
-                                seq_list.append(str(a) + '\t' + query[2][i] + '\t' + str(b) + '\t' + subject[2][i])
-
-                                i += 1
-                        else:
-                            pass
-                    else:
-                        pass
-
-            if seq_list == []:
-                conserved = '--'
-            else:
-                for item in seq_list:
-                    if item.split('\t')[0] == str(position) and item.split('\t')[1] == item.split('\t')[3]:
-                        conserved = 'Yes'
-                        homolog_position = item.split('\t')[2]
-                    else:
-                        pass
-            if homolog_position == '' and conserved == '':
-                conserved = 'No'
-
-    return id, evalue, conserved, homolog_position
+                raise RuntimeError('{} is an unknown file_format!'.format(file_format))
 
 
 def _blastp_worker(search_item, db = None, verbose=False):
 
-    return_code, dat = blastp(search_item[2], db, search_item[1], verbose=verbose)
+    query = '>sp|{}|{}\\n{}'.format(search_item[0], search_item[2], search_item[3])
+    return_code, dat = blastp(search_item[1], db, query, verbose=verbose)
     return dat
 
 
@@ -113,7 +222,8 @@ def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=Tr
     search_list = list()
     for id in set([x['id'] for x in peptides]):
         for o in organisms:
-            search_list.append((id, sequences[id], o))
+            # search_list is tuple of (id, organisms, description, sequencer)
+            search_list.append((id, o, sequences[id][0], sequences[id][1]))
 
     #calculate number of threads required
     _nThread = int(1)
@@ -145,7 +255,7 @@ def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=Tr
     for sl, r in zip(search_list, results):
         if sl[0] not in ret:
             ret[sl[0]]=dict()
-        ret[sl[0]][sl[2]]=r
+        ret[sl[0]][sl[1]]=Alignment(r)
 
     return ret
 
