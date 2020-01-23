@@ -59,7 +59,7 @@ def output(line_dict, organism_list, defined_organism):
     for organism in organism_list:
         line += '\t{}'.format(line_dict[organism + '_conserved'])
     line += '\t'
-    line += '\t'.join([line_dict['{}_{}'.format(defined_organism, x)] for x in ALLIGNMENT_COLUMNS])
+    line += '\t'.join([str(line_dict['{}_{}'.format(defined_organism, x)]) for x in ALLIGNMENT_COLUMNS])
 
     n = 1
     while n < (len(line_dict) - 19):
