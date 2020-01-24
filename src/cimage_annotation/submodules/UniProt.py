@@ -104,7 +104,7 @@ def get_uniprot_records(ids, nThread, verbose=False, show_bar=True):
         length = len(ids)
         for i, it in enumerate(ids):
             sys.stdout.write('Working on {} of {}\n'.format(i, length))
-            make_request(it, verbose=verbose)
+            ret.append(make_request(it, verbose=verbose))
 
     assert(len(ids) == len(ret))
     return {k: record for k, record in zip(ids, ret)}

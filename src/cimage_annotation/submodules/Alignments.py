@@ -36,13 +36,6 @@ class Alignment(object):
             self._empty = True
 
 
-    @staticmethod
-    def from_string(raw_xml):
-        if raw_xml == '':
-            return None
-        return Alignment(raw_xml)
-
-
     def _get_hit_path_text(self, path):
         temp = self._best_hit.find(path)
         return None if temp is None else temp.text

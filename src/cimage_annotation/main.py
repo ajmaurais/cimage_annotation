@@ -10,6 +10,8 @@ from .submodules import MSParser, UniProt, Blast, Alignments, Fasta, parent_pars
 
 PROG_VERSION=2.0
 SEQ_PATH='sequences.fasta'
+FXN_SEP='!'
+RESIDUE_SEP='|'
 
 # List of organisms for conservation analysis
 organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
@@ -119,7 +121,7 @@ def main():
             continue
 
         UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p['id']],
-                                      res_sep=args.residue_sep, fxn_sep=args.fxn_sep)
+                                      res_sep=RESIDUE_SEP, fxn_sep=FXN_SEP)
         peptides[i]['position'] = UniProt_data[1]   # cysteine position
         peptides[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
         peptides[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
@@ -169,7 +171,7 @@ def main():
 
                 evalue = alignment_data[p['id']][organism].get_best_evalue()
                 conserved_temp = list()
-                for pos in p['position'].split(args.residue_sep):
+                for pos in p['position'].split(RESIDUE_SEP):
                     cp_temp = '--'
                     if pos == 'BAD_ID':
                         cp_temp = 'Error'
@@ -180,7 +182,7 @@ def main():
                             cp_temp = 'Yes' if alignment_data[p['id']][organism].conserved_at_position(int(pos)) else 'No'
                     conserved_temp.append(cp_temp)
 
-                peptides[i][str(organism) + '_conserved'] = args.residue_sep.join(conserved_temp)
+                peptides[i][str(organism) + '_conserved'] = RESIDUE_SEP.join(conserved_temp)
 
                 # for comparative organism analyze Uniprot entry of best blast hit
                 if organism == args.defined_organism.lower():
@@ -195,17 +197,17 @@ def main():
 
                             positions_temp = list()
                             functions_temp = list()
-                            for pos in p['position'].split(args.residue_sep):
+                            for pos in p['position'].split(RESIDUE_SEP):
                                 homolog_position = alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
                                 positions_temp.append(str(homolog_position))
                                 functions_temp.append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
 
-                        org_dict_temp['position'] = args.residue_sep.join(positions_temp)
+                        org_dict_temp['position'] = RESIDUE_SEP.join(positions_temp)
                         if ''.join(functions_temp):
                             if len(functions_temp) == 1:
                                 org_dict_temp['function'] = functions_temp[0]
                             else:
-                                org_dict_temp['function'] = args.fxn_sep.join(['{}:{}'.format(p,s) for p, s in zip(positions_temp,
+                                org_dict_temp['function'] = FXN_SEP.join(['{}:{}'.format(p,s) for p, s in zip(positions_temp,
                                                                                                                    functions_temp)])
 
                     # add alignment data to peptides
