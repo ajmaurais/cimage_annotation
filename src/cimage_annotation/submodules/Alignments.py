@@ -16,7 +16,7 @@ class Alignment(object):
     Read BLAST XML file and provide methods to acess underlying alignment data.
     '''
 
-    def __init__(self, raw_xml, query_id = None, query_description = None, query_organism = None):
+    def __init__(self, raw_xml, query_id=None, query_description=None, query_organism=None, verbose=False):
         '''
         Default constructor
 
@@ -24,22 +24,64 @@ class Alignment(object):
         ----------
         raw_xml: str
             BLAST XML file as text.
+        query_id: str
+            Acession of query.
+        query_description: str
+            Description of query.
+        query_organism: str
+            Query organism.
+        verbose: bool
+            Should errors and warning messages be printed to stderr?
         '''
 
         self.query_id = query_id
         self.query_description = query_description
         self.query_organism = query_organism
+        self.verbose = verbose
 
         if raw_xml:
             self._tree = ET.fromstring(raw_xml)
             self._best_hit = self._tree.find('.//Iteration_hits/Hit')
             self._hsp = None
+            self._add_text_to_path('BlastOutput_iterations/Iteration/Iteration_query-ID',
+                                   self.query_id,
+                                   error_level=1 if self.verbose else 0)
+            self._add_text_to_path('BlastOutput_iterations/Iteration/Iteration_query-def',
+                                   self.query_description,
+                                   error_level=1 if self.verbose else 0)
+
             if self._best_hit is None:
                 self._empty = True
             else:
                 self._empty = False
         else:
             self._empty = True
+
+
+    def _add_text_to_path(self, path, text, error_level = 0):
+        '''
+        Add path to element in self._tree
+
+        Parameters
+        ----------
+        path: str
+            Xpath to element
+        text: str
+            Test to add to element
+        error_level: int
+            Specify what to do if `path` does not exist.
+            0: do nothing, exit from function silently.
+            1: Print a warning and exit.
+            2: Raise an AttributeError.
+        '''
+
+        try:
+            self._tree.find(path).text = text
+        except AttributeError as e:
+            if error_level != 0:
+                sys.stderr.write('WARN: No element at path {}'.format(path))
+            if error_level != 1 or error_level != 0:
+                raise AttributeError(e)
 
 
     def _get_hit_path_text(self, path):
@@ -133,7 +175,11 @@ class Alignment(object):
             return False
         query_residue = self._hsp['Hsp_qseq'][query_index]
         hit_residue = self._hsp['Hsp_hseq'][query_index]
-        sys.stdout.write('{}: {} == {} -> {}\n'.format(pos, query_residue, hit_residue, (hit_residue == query_residue)))
+        if self.verbose:
+            sys.stdout.write('{}: {} == {} -> {}\n'.format(pos,
+                                                           query_residue,
+                                                           hit_residue,
+                                                           (hit_residue == query_residue)))
 
         return hit_residue == query_residue
 
@@ -253,7 +299,10 @@ def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=Tr
     for sl, r in zip(search_list, results):
         if sl[0] not in ret:
             ret[sl[0]]=dict()
-        ret[sl[0]][sl[1]]=Alignment(r, query_id = sl[0], query_description = sl[2], query_organism = sl[1])
+        ret[sl[0]][sl[1]]=Alignment(r, query_id=sl[0],
+                                    query_description=sl[2],
+                                    query_organism=sl[1],
+                                    verbose=verbose)
 
     return ret
 
