@@ -173,7 +173,7 @@ def main():
                 conserved_temp = list()
                 for pos in p['position'].split(RESIDUE_SEP):
                     cp_temp = '--'
-                    if pos == 'BAD_ID':
+                    if pos == 'BAD_ID' or pos == 'RESIDUE_NOT_FOUND':
                         cp_temp = 'Error'
                     else:
                         assert(pos.isdigit())
@@ -199,7 +199,7 @@ def main():
                             positions_temp = list()
                             functions_temp = list()
                             for pos in p['position'].split(RESIDUE_SEP):
-                                homolog_position = alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
+                                homolog_position = None if not pos.isdigit() else alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
                                 if homolog_position is None:
                                     homolog_position = 0
                                 positions_temp.append(str(homolog_position))

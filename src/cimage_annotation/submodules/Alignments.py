@@ -209,8 +209,6 @@ class Alignment(object):
 
 
 def _blastp_worker(search_item, db = None, verbose=False):
-
-    #query = '>sp|{}|{}\n{}'.format(search_item[0], search_item[2], search_item[3])
     query = search_item[3]
     return_code, dat = blastp(search_item[1], db, query, verbose=verbose)
     return dat

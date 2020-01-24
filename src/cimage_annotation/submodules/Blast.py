@@ -19,7 +19,7 @@ def blastp(organism, database_path, query, verbose=False):
 
     # TODO: make blastp exe an option in setup.py
     exe = 'blastp'
-    cmd = 'echo -e "{}"| {}'.format(query, exe)
+    cmd = 'echo "{}"| {}'.format(query, exe)
     cmd += ' -query /dev/stdin'
     cmd += ' -db {}'.format(_db_path)
     cmd += ' -outfmt ' + '5'
