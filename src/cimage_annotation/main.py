@@ -49,7 +49,7 @@ def main():
                         'This option overrides the --parallel option.')
 
     parser.add_argument('--debug', choices=['none', 'pdb', 'pudb'], default='none',
-            help='Start the main method in the selected debuger.')
+            help='Start the main method in the selected debugger.')
 
     args = parser.parse_args()
 

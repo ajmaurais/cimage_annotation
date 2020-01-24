@@ -22,7 +22,7 @@ PARENT_PARSER.add_argument('-w', '--write_alignment_data', choices=[0,1], type=i
                          '0 is the default.')
 
 PARENT_PARSER.add_argument('--align_format', choices=['xml', 'txt'], default='txt',
-                           help='Alignment file format. xml is BLAST XML format, sutible for programing, '
+                           help='Alignment file format. xml is BLAST XML format, sutible for programming, '
                            'txt is human readable.')
 
 PARENT_PARSER.add_argument('--evalue_co', default=1e-5, type=float,

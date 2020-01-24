@@ -13,7 +13,7 @@ from .Blast import blastp
 
 class Alignment(object):
     '''
-    Read BLAST XML file and provide methods to acess underlying alignment data.
+    Read BLAST XML file and provide methods to access underlying alignment data.
     '''
 
     def __init__(self, raw_xml, query_id=None, query_description=None, query_organism=None, verbose=False):
@@ -91,7 +91,7 @@ class Alignment(object):
 
     def get_best_id(self):
         '''
-        Get acession of best alignmant match.
+        Get acession of best alignment match.
 
         Returns
         -------
@@ -104,7 +104,7 @@ class Alignment(object):
 
     def get_best_description(self):
         '''
-        Get description of best alignmant match.
+        Get description of best alignment match.
 
         Returns
         -------

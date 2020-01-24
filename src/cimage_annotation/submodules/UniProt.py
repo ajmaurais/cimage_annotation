@@ -125,7 +125,7 @@ def cys_position(protein_seq, peptide_seq, mod_loc):
     '''
     Get the position of a cysteine in a parent protein.
 
-    Paramaters
+    Parameters
     ----------
     protein_seq: str
         Full parent protein sequence.
@@ -154,7 +154,7 @@ def cys_function(record, position):
     '''
     Get residue function annotation at `position` if it exists in `record`.
 
-    Paramaters
+    Parameters
     ----------
     position: int
         Index (starting from 0) of the residue of interest.

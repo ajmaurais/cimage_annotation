@@ -74,7 +74,7 @@ def read_tsv(fname, hasHeader=True):
     Read csv or tsv file into DataFrame.
     File format and deliminators are detected automatically using csv.Sniffer().
 
-    Paramaters
+    Parameters
     ----------
     fname: str
         Path to file to read.
