@@ -203,7 +203,10 @@ def main():
                                 if homolog_position is None:
                                     homolog_position = 0
                                 positions_temp.append(str(homolog_position))
-                                functions_temp.append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
+                                if org_record_dict[id_temp] is None:
+                                    functions_temp.append('')
+                                else:
+                                    functions_temp.append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
 
                         org_dict_temp['position'] = RESIDUE_SEP.join(positions_temp)
                         if ''.join(functions_temp):
@@ -211,7 +214,7 @@ def main():
                                 org_dict_temp['function'] = functions_temp[0]
                             else:
                                 org_dict_temp['function'] = FXN_SEP.join(['{}:{}'.format(p,s) for p, s in zip(positions_temp,
-                                                                                                                   functions_temp)])
+                                                                                                              functions_temp)])
 
                     # add alignment data to peptides
                     for k, v in org_dict_temp.items():
