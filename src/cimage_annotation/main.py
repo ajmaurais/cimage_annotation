@@ -199,6 +199,8 @@ def main():
                             functions_temp = list()
                             for pos in p['position'].split(RESIDUE_SEP):
                                 homolog_position = alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
+                                if homolog_position is None:
+                                    homolog_position = 0
                                 positions_temp.append(str(homolog_position))
                                 functions_temp.append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
 

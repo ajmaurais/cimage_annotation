@@ -30,8 +30,10 @@ class Alignment(object):
             self._tree = ET.fromstring(raw_xml)
             self._best_hit = self._tree.find('.//Iteration_hits/Hit')
             self._hsp = None
-            assert(self._best_hit is not None)
-            self._empty = False
+            if self._best_hit is None:
+                self._empty = True
+            else:
+                self._empty = False
         else:
             self._empty = True
 
