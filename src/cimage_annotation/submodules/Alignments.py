@@ -16,7 +16,7 @@ class Alignment(object):
     Read BLAST XML file and provide methods to acess underlying alignment data.
     '''
 
-    def __init__(self, raw_xml):
+    def __init__(self, raw_xml, query_id = None, query_description = None, query_organism = None):
         '''
         Default constructor
 
@@ -25,6 +25,10 @@ class Alignment(object):
         raw_xml: str
             BLAST XML file as text.
         '''
+
+        self.query_id = query_id
+        self.query_description = query_description
+        self.query_organism = query_organism
 
         if raw_xml:
             self._tree = ET.fromstring(raw_xml)
@@ -206,7 +210,8 @@ class Alignment(object):
 
 def _blastp_worker(search_item, db = None, verbose=False):
 
-    query = '>sp|{}|{}\\n{}'.format(search_item[0], search_item[2], search_item[3])
+    #query = '>sp|{}|{}\n{}'.format(search_item[0], search_item[2], search_item[3])
+    query = search_item[3]
     return_code, dat = blastp(search_item[1], db, query, verbose=verbose)
     return dat
 
@@ -217,7 +222,7 @@ def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=Tr
     search_list = list()
     for id in set([x['id'] for x in peptides]):
         for o in organisms:
-            # search_list is tuple of (id, organisms, description, sequencer)
+            # search_list is tuple of (id, organisms, description, sequence)
             search_list.append((id, o, sequences[id][0], sequences[id][1]))
 
     #calculate number of threads required
@@ -250,7 +255,7 @@ def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=Tr
     for sl, r in zip(search_list, results):
         if sl[0] not in ret:
             ret[sl[0]]=dict()
-        ret[sl[0]][sl[1]]=Alignment(r)
+        ret[sl[0]][sl[1]]=Alignment(r, query_id = sl[0], query_description = sl[2], query_organism = sl[1])
 
     return ret
 

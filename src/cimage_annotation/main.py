@@ -177,8 +177,9 @@ def main():
                         cp_temp = 'Error'
                     else:
                         assert(pos.isdigit())
-                        assert(evalue is not None)
-                        if evalue <= args.evalue_co:
+                        if evalue is None:
+                            cp_temp == '--'
+                        elif evalue <= args.evalue_co:
                             cp_temp = 'Yes' if alignment_data[p['id']][organism].conserved_at_position(int(pos)) else 'No'
                     conserved_temp.append(cp_temp)
 
