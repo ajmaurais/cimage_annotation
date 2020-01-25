@@ -3,6 +3,7 @@ import sys
 import os
 import argparse
 import subprocess
+import os.path
 
 from .submodules import parent_parser
 
@@ -47,11 +48,25 @@ def main():
                         help='Walltime per job in the format hh:mm:ss. Default is 12:00:00.')
 
     parser.add_argument('-g', '--go', action='store_true', default=False,
-                        help='Should jobs be submitted? If this flag is not supplied, program will be a dry run. '
-                               '.pbs file will printed but jobs will not be submitted.')
+                        help='Should job be submitted? If this flag is not supplied, program will be a dry run. '
+                             '.pbs file will written but job will not be submitted.')
 
     args = parser.parse_args()
     parent_args = parent_parser.PARENT_PARSER.parse_known_args()[0]
+    
+    # Manually check args
+    n_arg_errors = 0
+    error_message = '\nThere were errors in the options you specified...'
+    if not os.path.isfile(args.input_file):
+        error_message += '\n\tSpecified input file: {} does not exist on path:\n\t\t{}\n'.format(args.input_file,
+                                                                                               os.path.abspath(args.input_file))
+        n_arg_errors += 1
+    if args.align and args.database_dir is None:
+        error_message += '\n\t--database_dir must be specified when --align 1 is set\n'
+        n_arg_errors += 1
+    if n_arg_errors > 0:
+        sys.stderr.write(error_message)
+        return -1
 
     sys.stdout.write('\nRequested job with {} processor{} and {}gb of memory...\n'.format(args.ppn, getPlurality(args.ppn),
                                                                                           args.mem))
