@@ -313,11 +313,11 @@ class Alignment(object):
 
                         self._write_element(outF, 'A', '{}{}'.format(self._XML_MIDLINE_SEQ_NAME,
                                                                      ' ' * (max_name_len - len(self._XML_MIDLINE_SEQ_NAME))),
-                                            '{} {}'.format(query_seq[begin:end], end))
+                                            '{} {}'.format(midline_seq[begin:end], end))
 
                         self._write_element(outF, 'A', '{}{}'.format(self._XML_HIT_SEQ_NAME,
                                                                      ' ' * (max_name_len - len(self._XML_HIT_SEQ_NAME))),
-                                            '{} {}'.format(query_seq[begin:end], end))
+                                            '{} {}'.format(hit_seq[begin:end], end))
                         outF.write('\n')
 
             elif file_format == 'xml':
