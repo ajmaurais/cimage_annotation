@@ -40,7 +40,7 @@ qsub_cimage_annotation --align 1 --database_dir <path_to_dir_with_sequence_datab
 
 # How to install on Pleiades
 
-1\. First clone the `cimage_annotation` GitHub repo. You can store the `cimage_annotation` source code anywhere on your `pleiades` account, but I recommend putting locally installed programs in `~/local`. 
+1\. First clone the `cimage_annotation` GitHub repository. You can store the `cimage_annotation` source code anywhere on your `pleiades` account. However, the installation instructions assume the program is being installed in `~/local`. 
 
 ```bash
 mkdir -p ~/local & cd ~/local # make ~/local if it doesn't exist and navigate to it
@@ -62,7 +62,7 @@ README.md  setup.py  src/  venv/
 ```
 If you are missing the `venv` directory, something went wrong and the following commands will not work.
 
-3\. There is a bug in `biopython` 1.6.1, one of the dependencies for `cimage_annotation`, which will cause an error if it is used. Therefore, you must manually install `biopython` from a fork of the main `biopython` GitHub repository, in which the bug has been fixed. The build and install steps will produce a lot of output and take several seconds to finish.
+3\. There is a bug in `biopython` 1.6.1, one of the dependencies for `cimage_annotation`, which will cause an error if it is used. Therefore, you must manually install `biopython` from a fork of the main `biopython` GitHub repository, in which the bug has been fixed. The build and install steps should produce a lot of output and take several seconds to finish.
 
 ```bash
 cd ~/local

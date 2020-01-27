@@ -65,7 +65,7 @@ class Alignment(object):
 
         if raw_xml:
             self._tree = ET.fromstring(raw_xml)
-            self._best_hit = self._tree.find('.//Iteration_hits/Hit')
+            self._best_hit = self._tree.find(self._XML_HITS_PATH)
             self._hsp = None
             self._add_text_to_path('BlastOutput_iterations/Iteration/Iteration_query-ID',
                                    self.query_id,
@@ -153,7 +153,7 @@ class Alignment(object):
 
 
     def _populate_hsp(self):
-        self._hsp = {x.tag: x.text for x in self._best_hit.findall('./Hit_hsps/Hsp/')}
+        self._hsp = {x.tag: x.text for x in self._best_hit.findall(self._XML_HSP_PATH)}
 
         self._hsp['hit_seq_map'] = list()
         seq_index = 0
@@ -274,6 +274,8 @@ class Alignment(object):
             raise RuntimeError('{} is an invalid mode.'.format(mode))
 
         if self._empty:
+            if self._VERBOSE:
+                sys.stderr.write('WARN: Attempting to write an empty Alignment file.')
             return
 
         with open(fname, mode) as outF:

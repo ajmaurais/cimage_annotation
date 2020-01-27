@@ -37,7 +37,8 @@ def parse_input(fname, file_type, defined_organism):
 
 def main():
     parser = argparse.ArgumentParser(prog = 'cimage_annotation', parents=[parent_parser.PARENT_PARSER],
-                                     description = 'Annotate functional cysteine residues in cimage output.')
+                                     description = 'Annotate functional cysteine residues in cimage output.',
+                                     epilog='cimage_annotation was written by Dan Bak and Aaron Maurais.\n')
 
     parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
