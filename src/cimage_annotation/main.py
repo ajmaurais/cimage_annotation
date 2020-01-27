@@ -1,17 +1,15 @@
 
-import os
-import os.path
 import sys
 import argparse
 import re
 from multiprocessing import cpu_count
 
-from .submodules import MSParser, UniProt, Blast, Alignments, Fasta, parent_parser
+from .submodules import MSParser, UniProt, Alignments, Fasta, parent_parser
 
 PROG_VERSION=2.0
-SEQ_PATH='sequences.fasta'
-FXN_SEP='!'
-RESIDUE_SEP='|'
+SEQ_PATH = 'sequences.fasta'
+FXN_SEP = '!'
+RESIDUE_SEP = '|'
 
 # List of organisms for conservation analysis
 organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
@@ -36,11 +34,11 @@ def parse_input(fname, file_type, defined_organism):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog = 'cimage_annotation', parents=[parent_parser.PARENT_PARSER],
-                                     description = 'Annotate functional cysteine residues in cimage output.',
+    parser = argparse.ArgumentParser(prog='cimage_annotation', parents=[parent_parser.PARENT_PARSER],
+                                     description='Annotate functional cysteine residues in cimage output.',
                                      epilog='cimage_annotation was written by Dan Bak and Aaron Maurais.\n')
 
-    parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
+    parser.add_argument('-p', '--parallel', choices=[0, 1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
                         ' Parallel processing is performed on up to the number of logical cores on your system. '
                         '1 is the default.')
@@ -76,7 +74,7 @@ def main():
     if args.parallel and args.nThread is None:
         _nThread = cpu_count()
     elif not args.parallel and args.nThread is None:
-        _nThread = 1
+        _nThread=1
 
 
     # Open cimage or dtaselect file
@@ -110,9 +108,9 @@ def main():
 
     sys.stdout.write('\nRetreiving protein Uniprot records...\n')
     record_dict = UniProt.get_uniprot_records(uniuque_ids, _nThread, verbose=args.verbose,
-            show_bar=not(args.verbose and args.parallel==0))
+            show_bar = not(args.verbose and args.parallel==0))
 
-    seq_written=False
+    seq_written = False
     for i, p in enumerate(peptides):
         # Get and Parse Uniprot entry for protein
         try:
@@ -149,17 +147,17 @@ def main():
             sys.stdout.write('Done!\n')
 
     if args.align:
-        alignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
+        alignment_data=Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
                                               nThread=_nThread, verbose=args.verbose,
                                               show_bar=not(args.verbose and args.parallel==0))
 
         if args.defined_organism != 'none':
-            org_ids = set()
+            org_ids=set()
             for a in alignment_data.values():
                 org_ids.add(a[args.defined_organism].get_best_id())
 
             sys.stdout.write('\nRetreiving Uniprot records for {} alignments...\n'.format(args.defined_organism))
-            org_record_dict = UniProt.get_uniprot_records(org_ids, _nThread, verbose=args.verbose,
+            org_record_dict=UniProt.get_uniprot_records(org_ids, _nThread, verbose=args.verbose,
                     show_bar=not(args.verbose and args.parallel==0))
 
         seen=set() # Keep track of seen protein IDs
@@ -167,60 +165,60 @@ def main():
             for organism in organism_list:
                 if p['id'] in seen and args.write_alignment_data:
                     alignment_data[p['id']][organism].write('{}_alignments.{}'.format(organism, args.align_format),
-                                                            file_format = args.align_format, mode = 'a')
+                                                            file_format=args.align_format, mode='a')
                 seen.add(p['id'])
 
-                evalue = alignment_data[p['id']][organism].get_best_evalue()
-                conserved_temp = list()
+                evalue=alignment_data[p['id']][organism].get_best_evalue()
+                conserved_temp=list()
                 for pos in p['position'].split(RESIDUE_SEP):
-                    cp_temp = '--'
+                    cp_temp='--'
                     if pos == 'BAD_ID' or pos == 'RESIDUE_NOT_FOUND':
-                        cp_temp = 'Error'
+                        cp_temp='Error'
                     else:
                         assert(pos.isdigit())
                         if evalue is None:
                             cp_temp == '--'
                         elif evalue <= args.evalue_co:
-                            cp_temp = 'Yes' if alignment_data[p['id']][organism].conserved_at_position(int(pos)) else 'No'
+                            cp_temp='Yes' if alignment_data[p['id']][organism].conserved_at_position(int(pos)) else 'No'
                     conserved_temp.append(cp_temp)
 
-                peptides[i][str(organism) + '_conserved'] = RESIDUE_SEP.join(conserved_temp)
+                peptides[i][str(organism) + '_conserved']=RESIDUE_SEP.join(conserved_temp)
 
                 # for comparative organism analyze Uniprot entry of best blast hit
                 if organism == args.defined_organism.lower():
-                    org_dict_temp = {x: '' for x in ['id', 'evalue', 'description', 'position', 'function']}
+                    org_dict_temp={x: '' for x in ['id', 'evalue', 'description', 'position', 'function']}
 
-                    id_temp = alignment_data[p['id']][organism].get_best_id()
-                    org_dict_temp['id'] = id_temp
-                    org_dict_temp['description'] = alignment_data[p['id']][organism].get_best_description()
+                    id_temp=alignment_data[p['id']][organism].get_best_id()
+                    org_dict_temp['id']=id_temp
+                    org_dict_temp['description']=alignment_data[p['id']][organism].get_best_description()
                     if id_temp != '':
-                        org_dict_temp['evalue'] = alignment_data[p['id']][organism].get_best_evalue()
+                        org_dict_temp['evalue']=alignment_data[p['id']][organism].get_best_evalue()
                         if org_dict_temp['evalue'] <= args.evalue_co:
 
-                            positions_temp = list()
-                            functions_temp = list()
+                            positions_temp=list()
+                            functions_temp=list()
                             for pos in p['position'].split(RESIDUE_SEP):
-                                homolog_position = None if not pos.isdigit() else alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
+                                homolog_position=None if not pos.isdigit() else alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
                                 if homolog_position is None:
-                                    homolog_position = 0
+                                    homolog_position=0
                                 positions_temp.append(str(homolog_position))
                                 if org_record_dict[id_temp] is None:
                                     functions_temp.append('')
                                 else:
                                     functions_temp.append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
 
-                        org_dict_temp['position'] = RESIDUE_SEP.join(positions_temp)
+                        org_dict_temp['position']=RESIDUE_SEP.join(positions_temp)
                         if ''.join(functions_temp):
                             if len(functions_temp) == 1:
-                                org_dict_temp['function'] = functions_temp[0]
+                                org_dict_temp['function']=functions_temp[0]
                             else:
-                                org_dict_temp['function'] = FXN_SEP.join(['{}:{}'.format(p,s) for p, s in zip(positions_temp,
+                                org_dict_temp['function']=FXN_SEP.join(['{}:{}'.format(p, s) for p, s in zip(positions_temp,
                                                                                                               functions_temp)])
 
                     # add alignment data to peptides
                     for k, v in org_dict_temp.items():
-                        key_temp = '{}_{}'.format(args.defined_organism, k)
-                        peptides[i][key_temp] = v
+                        key_temp='{}_{}'.format(args.defined_organism, k)
+                        peptides[i][key_temp]=v
 
     # file output
     with open(args.ofname, 'w') as outF:

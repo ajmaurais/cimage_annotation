@@ -1,20 +1,19 @@
 
 import sys
-import os
 import subprocess
 
 
-DATABASES = {'human':'human_nr_uniprot',
-             'mouse':'mouse_nr_uniprot',
-             'fly':'fly_nr_uniprot',
-             'yeast':'yeast_nr_uniprot',
-             'mustard':'mustard_nr_uniprot',
-             'worms':'worms_nr_uniprot'}
+DATABASES={'human':'human_nr_uniprot',
+           'mouse':'mouse_nr_uniprot',
+           'fly':'fly_nr_uniprot',
+           'yeast':'yeast_nr_uniprot',
+           'mustard':'mustard_nr_uniprot',
+           'worms':'worms_nr_uniprot'}
 
 
 def blastp(organism, database_path, query, verbose=False):
 
-    assert(database_path is not None)
+    assert database_path is not None
     _db_path = '{}/{}'.format(database_path, DATABASES[organism])
 
     # TODO: make blastp exe an option in setup.py
