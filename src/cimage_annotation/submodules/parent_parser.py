@@ -22,7 +22,7 @@ PARENT_PARSER.add_argument('-w', '--write_alignment_data', choices=[0,1], type=i
                          '0 is the default.')
 
 PARENT_PARSER.add_argument('--align_format', choices=['xml', 'txt'], default='txt',
-                           help='Alignment file format. xml is BLAST XML format, sutible for programing, '
+                           help='Alignment file format. xml is BLAST XML format, sutible for programming, '
                            'txt is human readable.')
 
 PARENT_PARSER.add_argument('--evalue_co', default=1e-5, type=float,
@@ -30,12 +30,6 @@ PARENT_PARSER.add_argument('--evalue_co', default=1e-5, type=float,
 
 PARENT_PARSER.add_argument('-d', '--database_dir', type=str,
                     help='Path to directory containing sequence databases to use for alignment.')
-
-PARENT_PARSER.add_argument('--residue_sep', type=str, default='|',
-                    help='Residue seperator for peptides with multiple modified residues. Default is \'|\'.')
-
-PARENT_PARSER.add_argument('--fxn_sep', type=str, default='!',
-                    help='Function seperator for peptides with multiple modified residues. Default is \'!\'.')
 
 PARENT_PARSER.add_argument('-o', '--defined_organism', default='none', type=str)
 
