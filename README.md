@@ -43,7 +43,8 @@ qsub_cimage_annotation --align 1 --database_dir <path_to_dir_with_sequence_datab
 1\. First clone the `cimage_annotation` GitHub repository. You can store the `cimage_annotation` source code anywhere on your `pleiades` account. However, the installation instructions assume the program is being installed in `~/local`. 
 
 ```bash
-mkdir -p ~/local & cd ~/local # make ~/local if it doesn't exist and navigate to it
+mkdir -p ~/local # make ~/local if it doesn't exist
+cd ~/local # navigate to ~/local
 git clone https://github.com/ajmaurais/cimage_annotation # clone the GitHub repository
 ```
 
