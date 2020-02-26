@@ -10,6 +10,8 @@ from tqdm import tqdm
 
 from .Blast import blastp
 
+# List of organisms for conservation analysis
+organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
 
 class Alignment():
     '''
@@ -335,11 +337,11 @@ def _blastp_worker(search_item, db=None, verbose=False):
     return dat
 
 
-def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=True, verbose=False):
+def align_all(unique_ids, sequences, db_path, organisms, nThread=None, show_bar=True, verbose=False):
 
     #construct list to pass to blastp worker
     search_list = list()
-    for id in set([x['id'] for x in peptides]):
+    for id in unique_ids:
         for o in organisms:
             # search_list is tuple of (id, organisms, description, sequence)
             search_list.append((id, o, sequences[id][0], sequences[id][1]))

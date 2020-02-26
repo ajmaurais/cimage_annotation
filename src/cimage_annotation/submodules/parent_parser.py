@@ -29,9 +29,10 @@ PARENT_PARSER.add_argument('--evalue_co', default=1e-5, type=float,
                            help='Alignment evalue cuttoff for a residue to be considered conserved. 1e-5 is the default.')
 
 PARENT_PARSER.add_argument('-d', '--database_dir', type=str,
-                    help='Path to directory containing sequence databases to use for alignment.')
+                           help='Path to directory containing sequence databases to use for alignment.')
 
-PARENT_PARSER.add_argument('-o', '--defined_organism', default='none', type=str)
+PARENT_PARSER.add_argument('-o', '--defined_organism', default='none', type=str,
+                           help='Define organism to look up function of conserved residues.')
 
 PARENT_PARSER.add_argument('-v', '--verbose', action='store_true', default=False,
                            help='Print verbose output?')
