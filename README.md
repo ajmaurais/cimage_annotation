@@ -33,7 +33,7 @@ Run `cimage_annotation` and retrieve functional cysteine annotations from UniPro
 cimage_annotation <input_file>
 ```
 
-Optionally, you can also align cysteine sites to other organisms do determine evolutionary conservation with the `--align 1` option. Because the sequence alignments are computationally intensive, when the `--align 1` is specified, you should submit the command as a PBS job. `cimage_annotation` includes an additional command to automatically generate a `.pbs` file and submit it to the queue for you.
+Optionally, you can also align cysteine sites to other organisms to determine whether the cysteine is evolutionarily conserved with the `--align 1` option. Because the sequence alignments are computationally intensive, when the `--align 1` is specified, you should submit the command as a PBS job. `cimage_annotation` includes an additional command to automatically generate a `.pbs` file and submit it to the queue for you.
 ```bash
 qsub_cimage_annotation --align 1 --database_dir <path_to_dir_with_sequence_databases> -g <input_file>
 ```
@@ -43,7 +43,8 @@ qsub_cimage_annotation --align 1 --database_dir <path_to_dir_with_sequence_datab
 1\. First clone the `cimage_annotation` GitHub repository. You can store the `cimage_annotation` source code anywhere on your `pleiades` account. However, the installation instructions assume the program is being installed in `~/local`. 
 
 ```bash
-mkdir -p ~/local & cd ~/local # make ~/local if it doesn't exist and navigate to it
+mkdir -p ~/local # make ~/local if it doesn't already exist
+cd ~/local # navigate to ~/local
 git clone https://github.com/ajmaurais/cimage_annotation # clone the GitHub repository
 ```
 
