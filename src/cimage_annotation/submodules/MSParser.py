@@ -2,9 +2,9 @@
 from .Alignments import organism_list
 from .dataframe import DataFrame, read_tsv
 
-PRINT_COLS=['index', 'id', 'symbol', 'description', 'protein_location', 'sequence', 'mass', 'position', 'cys_function']
+PRINT_COLS=['index', 'id', 'symbol', 'description', 'protein_location', 'sequence', 'mass', 'position', 'res_function']
 ALLIGNMENT_COLUMNS = ['id', 'evalue', 'description', 'position', 'function']
-ADDED_COLUMNS = ['position', 'cys_function', 'protein_location']
+ADDED_COLUMNS = ['position', 'res_function', 'protein_location']
 
 '''
 This file implements containers for various input file formats.

@@ -92,14 +92,14 @@ def main():
             continue
 
         UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p[args.id_col]],
-                                      res_sep=RESIDUE_SEP, fxn_sep=FXN_SEP)
+                                      all_features=args.all_features, res_sep=RESIDUE_SEP, fxn_sep=FXN_SEP)
 
         input_file.set_peptide_value(i, 'position', UniProt_data[1])   # cysteine position
-        input_file.set_peptide_value(i, 'cys_function', UniProt_data[2]) # cysteine function (if known)
+        input_file.set_peptide_value(i, 'res_function', UniProt_data[2]) # cysteine function (if known)
         input_file.set_peptide_value(i, 'protein_location', UniProt_data[4]) # protein subcellular localization (if known)
 
         if args.write_seq:
-            if p[args.id_col] not in sequences: #only write sequence if it is not currently in file.
+            if p[args.id_col] not in sequences: #only write sequence if it is not currently in file
                 Fasta.write_fasta_entry(SEQ_PATH,
                                         p[args.id_col],
                                         UniProt_data[3],
@@ -185,7 +185,9 @@ def main():
                                 if org_record_dict[id_temp] is None:
                                     functions_temp.append('')
                                 else:
-                                    functions_temp.append(UniProt.cys_function(org_record_dict[id_temp], homolog_position - 1))
+                                    functions_temp.append(UniProt.res_features(org_record_dict[id_temp],
+                                                                               homolog_position - 1,
+                                                                               all_features=args.all_features))
 
                         org_dict_temp['position'] = RESIDUE_SEP.join(positions_temp)
                         if ''.join(functions_temp):

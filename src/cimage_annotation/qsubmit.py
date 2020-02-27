@@ -81,6 +81,7 @@ def main():
     cimage_annotation_args['align'] = '' if args.align else None
     cimage_annotation_args['verbose'] = '' if args.verbose else None
     cimage_annotation_args['write_seq'] = '' if args.write_seq else None
+    cimage_annotation_args['all_features'] = '' if args.all_features else None
 
     pbsName = makePBS(args.mem, args.ppn, args.walltime, wd, cimage_annotation_args)
     command = 'qsub {}'.format(pbsName)

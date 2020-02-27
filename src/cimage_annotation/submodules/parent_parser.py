@@ -20,11 +20,15 @@ PARENT_PARSER.add_argument('--description_col', default='description',
 PARENT_PARSER.add_argument('-s', '--write_seq', action='store_true', default=False,
                            help='Write protein sequences in input to fasta file? 0 is the default.')
 
-PARENT_PARSER.add_argument('--ofname', default='Cysteine_annotation.tsv',
+PARENT_PARSER.add_argument('--all_features', action='store_true', default=False,
+                           help='Should all residue feature annotations be included? '
+                                'By default, only a simplified set of features are included.')
+
+PARENT_PARSER.add_argument('--ofname', default='residue_annotation.tsv',
                            help='Name of file to write results to.')
 
 PARENT_PARSER.add_argument('-a', '--align', action='store_true', default=False,
-                           help='Choose whether to balast protein sequences to determine cysteine conservation. '
+                           help='Choose whether to balast protein sequences to determine residue conservation. '
                                 'If this option is specified, a database dir must also be specified with the --database_dir option. '
                                 '0 is the default.')
 

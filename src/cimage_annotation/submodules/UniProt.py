@@ -148,7 +148,7 @@ def cys_position(protein_seq, peptide_seq, mod_loc):
     return cys_loc
 
 
-def cys_function(record, position):
+def res_features(record, position, all_features=False):
     '''
     Get residue function annotation at `position` if it exists in `record`.
 
@@ -158,33 +158,40 @@ def cys_function(record, position):
         Index (starting from 0) of the residue of interest.
     record: Bio.SwissProt.Record
         Record to get data from.
+    all_features: bool
+        Should all features or simplified list be used?
 
     Returns
     -------
-    cys_function: str
+    res_features: str
         Annotaton for cysteine function.
     '''
 
     ret = ''
     for feature in record.features:
         try:
-            if feature.type.upper() == 'DISULFID' and \
-               str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
-               int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
-                ret += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
+            if all_features:
+                if str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
+                   int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
+                    ret += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
+            else:
+                if feature.type.upper() == 'DISULFID' and \
+                   str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
+                   int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
+                    ret += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
 
-            elif feature.type.upper() in features_list and \
-                 str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
-                 (int(feature.location.end) - int(feature.location.start)) <= 10 and \
-                 int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
-                ret += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
+                elif feature.type.upper() in features_list and \
+                     str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
+                     (int(feature.location.end) - int(feature.location.start)) <= 10 and \
+                     int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
+                    ret += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
         except TypeError as e:
             continue
 
     return ret
 
 
-def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
+def ExPasy(sequence, record, all_features=False, res_sep='|', fxn_sep='!', combine_method=1):
 
     if combine_method != 1:
         raise NotImplementedError('combine_method {} not implemented.'.format(combine_method))
@@ -210,7 +217,7 @@ def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
                 positions.append('RESIDUE_NOT_FOUND')
             else:
                 positions.append(str(cys_pos + 1)) # convert to 1 based indexing here
-                functions.append(cys_function(record, cys_pos))
+                functions.append(res_features(record, cys_pos, all_features=all_features))
 
         position = res_sep.join(positions)
         if ''.join(functions):
