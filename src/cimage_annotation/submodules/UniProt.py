@@ -214,7 +214,7 @@ def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
 
         position = res_sep.join(positions)
         if ''.join(functions):
-            function = functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p,s) for p, s in zip(positions,functions)])
+            function = functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p, s) for p, s in zip(positions, functions)])
 
     else:
         position = 'BAD_ID'

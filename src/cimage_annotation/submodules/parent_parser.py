@@ -8,10 +8,14 @@ PARENT_PARSER.add_argument('-f', '--file_type', default='cimage', choices=['cima
                                  'For tsv format, there must be columns for protein ID and peptide sequence.')
 
 PARENT_PARSER.add_argument('--id_col', default='id',
-                           help='Specify the columm header containing protein Uniprot IDs.')
+                           help='Specify the columm header containing protein Uniprot IDs for tsv input.')
 
 PARENT_PARSER.add_argument('--seq_col', default='sequence',
-                           help='Specify the columm header containing peptide sequences.')
+                           help='Specify the columm header containing peptide sequences for tsv input.')
+
+PARENT_PARSER.add_argument('--description_col', default='description',
+                           help='Specify the columm header containing protein descriptions for tsv input. '
+                                'Only required for query description in alignment output files.')
 
 PARENT_PARSER.add_argument('-s', '--write_seq', action='store_true', default=False,
                            help='Write protein sequences in input to fasta file? 0 is the default.')

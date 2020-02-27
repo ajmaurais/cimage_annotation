@@ -26,6 +26,8 @@ iterpeptides():
     Iterate over peptides as (index, dict) pairs.
 set_peptide_value(index, key, value):
     Set value of peptide value at index.
+add_column(name):
+    Add empty column with specified name.
 
 Required members
 ----------------
@@ -56,6 +58,9 @@ class Cimage_file():
 
     def set_peptide_value(self, index, key, value):
         self.peptides[index][key] = value
+
+    def add_column(self, name):
+        pass
 
     @staticmethod
     def _parser(line, organism_list, defined_organism):
@@ -188,7 +193,7 @@ class Tsv_file():
                 raise KeyError('Required column: "{}" not found!'.format(col))
 
         for col in ADDED_COLUMNS:
-            self.dat[col] = ['' for _ in range(self.dat.nrow)]
+            self.add_column(col)
 
         self.unique_ids = set(self.dat[self.id_col])
 
@@ -203,6 +208,9 @@ class Tsv_file():
 
     def set_peptide_value(self, index, key, value):
         self.dat[key][index] = value
+
+    def add_column(self, name):
+        self.dat[name] = ['' for _ in range(self.dat.nrow)]
 
 class Dtaselect():
     def __init__(self):

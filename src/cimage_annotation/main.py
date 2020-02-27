@@ -106,7 +106,7 @@ def main():
                                         description=p['description'],
                                         append=seq_written)
                 seq_written = True
-        sequences[p[args.id_col]] = ('' if 'description' not in p else p['description'], UniProt_data[3])
+        sequences[p[args.id_col]] = ('' if args.description_col not in p else p[args.description_col], UniProt_data[3])
 
     # Replace alignment files with empty string so they won't be continuously appended to.
     if args.write_alignment_data and args.align:
@@ -123,8 +123,15 @@ def main():
         alignment_data = Alignments.align_all(input_file.unique_ids, sequences, args.database_dir, Alignments.organism_list,
                                               nThread=_nThread, verbose=args.verbose,
                                               show_bar=not(args.verbose and args.parallel == 0))
+        
+        for o in Alignments.organism_list:
+            input_file.add_column('{}_conserved'.format(o))
 
         if args.defined_organism != 'none':
+            
+            for o in MSParser.ALLIGNMENT_COLUMNS:
+                input_file.add_column('{}_{}'.format(args.defined_organism, o))
+
             org_ids = set()
             for a in alignment_data.values():
                 org_ids.add(a[args.defined_organism].get_best_id())
@@ -159,7 +166,7 @@ def main():
 
                 # for comparative organism analyze Uniprot entry of best blast hit
                 if organism == args.defined_organism.lower():
-                    org_dict_temp = {x: '' for x in ['id', 'evalue', 'description', 'position', 'function']}
+                    org_dict_temp = {x: '' for x in MSParser.ALLIGNMENT_COLUMNS}
 
                     id_temp = alignment_data[p[args.id_col]][organism].get_best_id()
                     org_dict_temp['id'] = id_temp
