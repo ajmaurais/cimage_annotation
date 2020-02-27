@@ -4,7 +4,7 @@ from .dataframe import DataFrame, read_tsv
 
 PRINT_COLS=['index', 'id', 'symbol', 'description', 'protein_location', 'sequence', 'mass', 'position', 'cys_function']
 ALLIGNMENT_COLUMNS = ['id', 'evalue', 'description', 'position', 'function']
-
+ADDED_COLUMNS = ['position', 'cys_function', 'protein_location']
 
 '''
 This file implements containers for various input file formats.
@@ -173,23 +173,31 @@ class Cimage_file():
                         self._write_line(outF, peptide, self.defined_organism)
 
 class Tsv_file():
-    def __init__(self, id_col = 'protein_ID'):
+    def __init__(self, id_col='protein_ID', seq_col='sequence'):
         self.dat = DataFrame()
         self.unique_ids = set()
 
         # column names
         self.id_col = id_col
-    
-    def read(self, fname):
+        self.seq_col = seq_col
+
+    def read(self, fname, defined_organism):
         self.dat = read_tsv(fname)
+        for col in (self.id_col, self.seq_col):
+            if col not in self.dat.columns:
+                raise KeyError('Required column: "{}" not found!'.format(col))
+
+        for col in ADDED_COLUMNS:
+            self.dat[col] = ['' for _ in range(self.dat.nrow)]
+
         self.unique_ids = set(self.dat[self.id_col])
 
     def __len__(self):
         return len(self.dat)
-    
+
     def iterpeptides(self):
         return self.dat.iterrows()
-    
+
     def write(self, fname):
         self.dat.to_csv(fname)
 

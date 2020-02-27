@@ -11,19 +11,19 @@ SEQ_PATH = 'sequences.fasta'
 FXN_SEP = '!'
 RESIDUE_SEP = '|'
 
-def read_input(fname, file_type, defined_organism):
+def read_input(args):
 
-    if file_type == 'cimage':
+    if args.file_type == 'cimage':
         ret = MSParser.Cimage_file()
-        ret.read(fname, defined_organism)
-        return ret
-    elif file_type == 'tsv':
-        pass
-        #return MSParser.Tsv_file().read(fname, defined_organism)
-    elif file_type == 'dtaselect':
-        return MSParser.Dtaselect()
+    elif args.file_type == 'tsv':
+        ret = MSParser.Tsv_file(id_col=args.id_col, seq_col=args.seq_col)
+    elif args.file_type == 'dtaselect':
+        ret = MSParser.Dtaselect()
     else:
         raise RuntimeError('{} is an unknown input file_type'.format(file_type))
+
+    ret.read(args.input_file, args.defined_organism)
+    return ret
 
 
 def main():
@@ -71,7 +71,7 @@ def main():
 
 
     # Open input file
-    input_file = read_input(args.input_file, args.file_type, args.defined_organism)
+    input_file = read_input(args)
 
     if len(input_file) == 0:
         sys.stderr.write('ERROR: No peptides found in {}!\n\tExiting...\n'.format(args.input_file))
@@ -79,19 +79,19 @@ def main():
 
     sys.stdout.write('\nRetreiving protein Uniprot records...\n')
     record_dict = UniProt.get_uniprot_records(input_file.unique_ids, _nThread, verbose=args.verbose,
-            show_bar = not(args.verbose and args.parallel==0))
+            show_bar = not(args.verbose and args.parallel == 0))
 
     sequences = dict()
     seq_written = False
     for i, p in input_file.iterpeptides():
         # Get and Parse Uniprot entry for protein
         try:
-            seq_temp = re.match(r'.?\.?([A-z\*]+)\.?/?', p['sequence']).group(1)
+            seq_temp = re.match(r'.?\.?([A-z\*]+)\.?/?', p[args.seq_col]).group(1)
         except AttributeError as e:
-            sys.stdout.write('Error parsing sequence: {}'.format(p['sequence']))
+            sys.stdout.write('Error parsing sequence: {}'.format(p[args.seq_col]))
             continue
 
-        UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p['id']],
+        UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p[args.id_col]],
                                       res_sep=RESIDUE_SEP, fxn_sep=FXN_SEP)
 
         input_file.set_peptide_value(i, 'position', UniProt_data[1])   # cysteine position
@@ -99,14 +99,14 @@ def main():
         input_file.set_peptide_value(i, 'protein_location', UniProt_data[4]) # protein subcellular localization (if known)
 
         if args.write_seq:
-            if p['id'] not in sequences: #only write sequence if it is not currently in file.
+            if p[args.id_col] not in sequences: #only write sequence if it is not currently in file.
                 Fasta.write_fasta_entry(SEQ_PATH,
-                                        p['id'],
+                                        p[args.id_col],
                                         UniProt_data[3],
                                         description=p['description'],
                                         append=seq_written)
                 seq_written = True
-        sequences[p['id']] = (p['description'], UniProt_data[3])
+        sequences[p[args.id_col]] = ('' if 'description' not in p else p['description'], UniProt_data[3])
 
     # Replace alignment files with empty string so they won't be continuously appended to.
     if args.write_alignment_data and args.align:
@@ -136,12 +136,12 @@ def main():
         seen=set() # Keep track of seen protein IDs
         for i, p in input_file.iterpeptides():
             for organism in Alignments.organism_list:
-                if p['id'] in seen and args.write_alignment_data:
-                    alignment_data[p['id']][organism].write('{}_alignments.{}'.format(organism, args.align_format),
+                if p[args.id_col] in seen and args.write_alignment_data:
+                    alignment_data[p[args.id_col]][organism].write('{}_alignments.{}'.format(organism, args.align_format),
                                                             file_format=args.align_format, mode='a')
-                seen.add(p['id'])
+                seen.add(p[args.id_col])
 
-                evalue = alignment_data[p['id']][organism].get_best_evalue()
+                evalue = alignment_data[p[args.id_col]][organism].get_best_evalue()
                 conserved_temp = list()
                 for pos in p['position'].split(RESIDUE_SEP):
                     cp_temp = '--'
@@ -152,7 +152,7 @@ def main():
                         if evalue is None:
                             cp_temp == '--'
                         elif evalue <= args.evalue_co:
-                            cp_temp = 'Yes' if alignment_data[p['id']][organism].conserved_at_position(int(pos)) else 'No'
+                            cp_temp = 'Yes' if alignment_data[p[args.id_col]][organism].conserved_at_position(int(pos)) else 'No'
                     conserved_temp.append(cp_temp)
 
                 input_file.set_peptide_value(i, '{}_conserved'.format(str(organism)), RESIDUE_SEP.join(conserved_temp))
@@ -161,17 +161,17 @@ def main():
                 if organism == args.defined_organism.lower():
                     org_dict_temp = {x: '' for x in ['id', 'evalue', 'description', 'position', 'function']}
 
-                    id_temp = alignment_data[p['id']][organism].get_best_id()
+                    id_temp = alignment_data[p[args.id_col]][organism].get_best_id()
                     org_dict_temp['id'] = id_temp
-                    org_dict_temp['description'] = alignment_data[p['id']][organism].get_best_description()
+                    org_dict_temp['description'] = alignment_data[p[args.id_col]][organism].get_best_description()
                     if id_temp != '':
-                        org_dict_temp['evalue'] = alignment_data[p['id']][organism].get_best_evalue()
+                        org_dict_temp['evalue'] = alignment_data[p[args.id_col]][organism].get_best_evalue()
                         if org_dict_temp['evalue'] <= args.evalue_co:
 
                             positions_temp = list()
                             functions_temp = list()
                             for pos in p['position'].split(RESIDUE_SEP):
-                                homolog_position = None if not pos.isdigit() else alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
+                                homolog_position = None if not pos.isdigit() else alignment_data[p[args.id_col]][organism].alignment_at_position(int(pos))[1]
                                 if homolog_position is None:
                                     homolog_position = 0
                                 positions_temp.append(str(homolog_position))

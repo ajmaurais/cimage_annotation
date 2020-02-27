@@ -3,8 +3,15 @@ import argparse
 
 PARENT_PARSER = argparse.ArgumentParser(add_help=False)
 
-PARENT_PARSER.add_argument('-f', '--file_type', default='cimage', choices=['cimage', 'dtaselect'],
-                           help='Choose input file format. cimage is the default.')
+PARENT_PARSER.add_argument('-f', '--file_type', default='cimage', choices=['cimage', 'tsv'],
+                           help='Choose input file format. cimage is the default.'
+                                 'For tsv format, there must be columns for protein ID and peptide sequence.')
+
+PARENT_PARSER.add_argument('--id_col', default='id',
+                           help='Specify the columm header containing protein Uniprot IDs.')
+
+PARENT_PARSER.add_argument('--seq_col', default='sequence',
+                           help='Specify the columm header containing peptide sequences.')
 
 PARENT_PARSER.add_argument('-s', '--write_seq', action='store_true', default=False,
                            help='Write protein sequences in input to fasta file? 0 is the default.')
@@ -22,8 +29,8 @@ PARENT_PARSER.add_argument('-w', '--write_alignment_data', action='store_true', 
                                 '0 is the default.')
 
 PARENT_PARSER.add_argument('--align_format', choices=['xml', 'txt'], default='txt',
-                                  help='Alignment file format. xml is BLAST XML format, sutible for programming, '
-                                  'txt is human readable.')
+                           help='Alignment file format. xml is BLAST XML format, sutible for programming, '
+                           'txt is human readable.')
 
 PARENT_PARSER.add_argument('--evalue_co', default=1e-5, type=float,
                            help='Alignment evalue cuttoff for a residue to be considered conserved. 1e-5 is the default.')

@@ -24,13 +24,11 @@ class DataFrame(object):
         return self.nrow
 
     def __getitem__(self, col):
-        print('Called get')
         if col not in self._keys:
             raise KeyError('{} is not a column in DataFrame!'.format(col))
         return self._data[self._keys[col]]
 
     def __setitem__(self, col, value):
-        print('Called set')
         if not isinstance(value, list):
             raise ValueError('value must be if type {}. Recieved {}'.format(type(self._data), type(value)))
         if not self.empty():
@@ -82,7 +80,7 @@ class DataFrame(object):
                     if row_i == 0:
                         outF.write(self.__getitem__(c)[i])
                     else:
-                        outF.write('{}{}'.format(self.__getitem__(c)[i], sep))
+                        outF.write('{}{}'.format(sep, self.__getitem__(c)[i]))
                 outF.write('\n')
 
 
