@@ -1,9 +1,7 @@
 
 import sys
-import os
-import os.path
 import re
-from urllib.error import URLError, HTTPError
+from urllib.error import URLError
 from http.client import BadStatusLine
 from multiprocessing.pool import ThreadPool as Pool
 from multiprocessing import cpu_count
@@ -12,7 +10,7 @@ import functools
 from Bio import ExPASy, SeqIO, SwissProt
 
 
-features_list =['CA_BIND', 'ZN_FING', 'DNA_BIND', 'NP_BIND',
+features_list = ['CA_BIND', 'ZN_FING', 'DNA_BIND', 'NP_BIND',
                  'ACT_SITE', 'METAL', 'BINDING', 'SITE',
                  'NON_STD', 'MOD_RES', 'LIPID', 'CARBOHYD',
                  'DISULFID', 'CROSSLINK', 'VARIANT', 'MUTAGEN',
@@ -30,7 +28,7 @@ def _parse_record(handle):
     return record
 
 
-def make_request(uniprot_id, verbose = True, n_retry = 10):
+def make_request(uniprot_id, verbose=True, n_retry=10):
     '''
     ExPASy get_sprot_raw wrapper to make retries if an http error occurs.
 
@@ -167,23 +165,23 @@ def cys_function(record, position):
         Annotaton for cysteine function.
     '''
 
-    cys_function = ''
+    ret = ''
     for feature in record.features:
         try:
             if feature.type.upper() == 'DISULFID' and \
                str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
                int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
-                cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
+                ret += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
 
             elif feature.type.upper() in features_list and \
                  str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
                  (int(feature.location.end) - int(feature.location.start)) <= 10 and \
                  int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
-                cys_function += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
+                ret += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
         except TypeError as e:
             continue
 
-    return cys_function
+    return ret
 
 
 def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
@@ -203,8 +201,8 @@ def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
         pro_location = protein_location(record)
         full_sequence = record.sequence
 
-        positions=list()
-        functions=list()
+        positions = list()
+        functions = list()
         for i, x in enumerate(re.finditer('\*', sequence)):
             mod_loc = x.start()-(i+1)
             cys_pos = cys_position(full_sequence, seq_no_mod, mod_loc)
@@ -216,7 +214,7 @@ def ExPasy(sequence, record, res_sep='|', fxn_sep='!', combine_method=1):
 
         position = res_sep.join(positions)
         if ''.join(functions):
-            function=functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p,s) for p, s in zip(positions,functions)])
+            function = functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p,s) for p, s in zip(positions,functions)])
 
     else:
         position = 'BAD_ID'

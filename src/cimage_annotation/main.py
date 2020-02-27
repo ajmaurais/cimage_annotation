@@ -1,46 +1,37 @@
 
-import os
-import os.path
 import sys
 import argparse
 import re
 from multiprocessing import cpu_count
 
-from .submodules import MSParser, UniProt, Blast, Alignments, Fasta, parent_parser
+from .submodules import MSParser, UniProt, Alignments, Fasta, parent_parser
 
-PROG_VERSION=2.0
-SEQ_PATH='sequences.fasta'
-FXN_SEP='!'
-RESIDUE_SEP='|'
+PROG_VERSION = 2.0
+SEQ_PATH = 'sequences.fasta'
+FXN_SEP = '!'
+RESIDUE_SEP = '|'
 
-# List of organisms for conservation analysis
-organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
+def read_input(args):
 
-def parse_input(fname, file_type, defined_organism):
-    _parser = None
-    if file_type == 'cimage':
-        _parser = MSParser.cimage
-    elif file_type == 'dtaselect':
-        _parser = MSParser.dtaselect
+    if args.file_type == 'cimage':
+        ret = MSParser.Cimage_file()
+    elif args.file_type == 'tsv':
+        ret = MSParser.Tsv_file(id_col=args.id_col, seq_col=args.seq_col)
+    elif args.file_type == 'dtaselect':
+        ret = MSParser.Dtaselect()
     else:
         raise RuntimeError('{} is an unknown input file_type'.format(file_type))
 
-    with open(fname, 'r') as inF:
-        lines = inF.readlines()
-
-    ret = list()
-    for line in lines:
-        ret.append(_parser(line, organism_list, defined_organism))
-
+    ret.read(args.input_file, args.defined_organism)
     return ret
 
 
 def main():
-    parser = argparse.ArgumentParser(prog = 'cimage_annotation', parents=[parent_parser.PARENT_PARSER],
-                                     description = 'Annotate functional cysteine residues in cimage output.',
+    parser = argparse.ArgumentParser(prog='cimage_annotation', parents=[parent_parser.PARENT_PARSER],
+                                     description='Annotate functional cysteine residues in cimage output.',
                                      epilog='cimage_annotation was written by Dan Bak and Aaron Maurais.\n')
 
-    parser.add_argument('-p', '--parallel', choices=[0,1], type=int, default=1,
+    parser.add_argument('-p', '--parallel', choices=[0, 1], type=int, default=1,
                         help='Choose whether internet queries and protein alignments should be performed in parallel.'
                         ' Parallel processing is performed on up to the number of logical cores on your system. '
                         '1 is the default.')
@@ -50,7 +41,7 @@ def main():
                         'This option overrides the --parallel option.')
 
     parser.add_argument('--debug', choices=['none', 'pdb', 'pudb'], default='none',
-            help='Start the main method in the selected debugger.')
+                        help='Start the main method in the selected debugger.')
 
     args = parser.parse_args()
 
@@ -76,72 +67,52 @@ def main():
     if args.parallel and args.nThread is None:
         _nThread = cpu_count()
     elif not args.parallel and args.nThread is None:
-        _nThread = 1
+        _nThread=1
 
 
-    # Open cimage or dtaselect file
-    file_input = parse_input(args.input_file, args.file_type, args.defined_organism)
+    # Open input file
+    input_file = read_input(args)
 
-    header = []
-    cysteines = []
-    peptides = []
-    index = ''
-    uniuque_ids = set()
-    sequences = dict()
-
-    # Analysis for a cimage file creates lists (above) of dictionaries
-    for i, line in enumerate(file_input):
-
-        if line['index'].strip() == 'index':  # create header line(s)
-            header.append(line)
-
-        elif line['index'].strip() != '':  # create peptide lines (no protein information - includes overall ratio)
-            index = line['index'].strip()
-            cysteines.append(line)
-
-        else:
-            file_input[i]['index'] = index # create protein lines
-            peptides.append(line)
-            uniuque_ids.add(line['id'])
-
-    if len(peptides) == 0:
+    if len(input_file) == 0:
         sys.stderr.write('ERROR: No peptides found in {}!\n\tExiting...\n'.format(args.input_file))
         return -1
 
     sys.stdout.write('\nRetreiving protein Uniprot records...\n')
-    record_dict = UniProt.get_uniprot_records(uniuque_ids, _nThread, verbose=args.verbose,
-            show_bar=not(args.verbose and args.parallel==0))
+    record_dict = UniProt.get_uniprot_records(input_file.unique_ids, _nThread, verbose=args.verbose,
+            show_bar = not(args.verbose and args.parallel == 0))
 
-    seq_written=False
-    for i, p in enumerate(peptides):
+    sequences = dict()
+    seq_written = False
+    for i, p in input_file.iterpeptides():
         # Get and Parse Uniprot entry for protein
         try:
-            seq_temp = re.match('.?\.?([A-z\*]+)\.?/?', p['sequence']).group(1)
+            seq_temp = re.match(r'.?\.?([A-z\*]+)\.?/?', p[args.seq_col]).group(1)
         except AttributeError as e:
-            sys.stdout.write('Error parsing sequence: {}'.format(p['sequence']))
+            sys.stdout.write('Error parsing sequence: {}'.format(p[args.seq_col]))
             continue
 
-        UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p['id']],
+        UniProt_data = UniProt.ExPasy(seq_temp, record_dict[p[args.id_col]],
                                       res_sep=RESIDUE_SEP, fxn_sep=FXN_SEP)
-        peptides[i]['position'] = UniProt_data[1]   # cysteine position
-        peptides[i]['cys_function'] = UniProt_data[2] # cysteine function (if known)
-        peptides[i]['protein_location'] = UniProt_data[4] # protein subcellular localization (if known)
+
+        input_file.set_peptide_value(i, 'position', UniProt_data[1])   # cysteine position
+        input_file.set_peptide_value(i, 'cys_function', UniProt_data[2]) # cysteine function (if known)
+        input_file.set_peptide_value(i, 'protein_location', UniProt_data[4]) # protein subcellular localization (if known)
 
         if args.write_seq:
-            if p['id'] not in sequences: #only write sequence if it is not currently in file.
+            if p[args.id_col] not in sequences: #only write sequence if it is not currently in file.
                 Fasta.write_fasta_entry(SEQ_PATH,
-                                        p['id'],
+                                        p[args.id_col],
                                         UniProt_data[3],
                                         description=p['description'],
                                         append=seq_written)
                 seq_written = True
-        sequences[peptides[i]['id']] = (p['description'], UniProt_data[3])
+        sequences[p[args.id_col]] = ('' if 'description' not in p else p['description'], UniProt_data[3])
 
     # Replace alignment files with empty string so they won't be continuously appended to.
     if args.write_alignment_data and args.align:
         # blast protein sequence against each fasta database and parse those alignments to determine cysteine conservation
         sys.stdout.write('\nAlligning protein sequences to determine cysteine conservation...\n')
-        for organism in organism_list:
+        for organism in Alignments.organism_list:
             align_fname = '{}_alignments.{}'.format(organism, args.align_format)
             sys.stdout.write('\tCreating {}...'.format(align_fname))
             with open(align_fname, 'w') as outF:
@@ -149,9 +120,9 @@ def main():
             sys.stdout.write('Done!\n')
 
     if args.align:
-        alignment_data = Alignments.align_all(peptides, sequences, args.database_dir, organism_list,
+        alignment_data = Alignments.align_all(input_file.unique_ids, sequences, args.database_dir, Alignments.organism_list,
                                               nThread=_nThread, verbose=args.verbose,
-                                              show_bar=not(args.verbose and args.parallel==0))
+                                              show_bar=not(args.verbose and args.parallel == 0))
 
         if args.defined_organism != 'none':
             org_ids = set()
@@ -160,47 +131,47 @@ def main():
 
             sys.stdout.write('\nRetreiving Uniprot records for {} alignments...\n'.format(args.defined_organism))
             org_record_dict = UniProt.get_uniprot_records(org_ids, _nThread, verbose=args.verbose,
-                    show_bar=not(args.verbose and args.parallel==0))
+                                                          show_bar=not(args.verbose and args.parallel==0))
 
         seen=set() # Keep track of seen protein IDs
-        for i, p in enumerate(peptides):
-            for organism in organism_list:
-                if p['id'] in seen and args.write_alignment_data:
-                    alignment_data[p['id']][organism].write('{}_alignments.{}'.format(organism, args.align_format),
-                                                            file_format = args.align_format, mode = 'a')
-                seen.add(p['id'])
+        for i, p in input_file.iterpeptides():
+            for organism in Alignments.organism_list:
+                if p[args.id_col] in seen and args.write_alignment_data:
+                    alignment_data[p[args.id_col]][organism].write('{}_alignments.{}'.format(organism, args.align_format),
+                                                            file_format=args.align_format, mode='a')
+                seen.add(p[args.id_col])
 
-                evalue = alignment_data[p['id']][organism].get_best_evalue()
+                evalue = alignment_data[p[args.id_col]][organism].get_best_evalue()
                 conserved_temp = list()
                 for pos in p['position'].split(RESIDUE_SEP):
                     cp_temp = '--'
-                    if pos == 'BAD_ID' or pos == 'RESIDUE_NOT_FOUND':
+                    if pos in ('BAD_ID', 'RESIDUE_NOT_FOUND'):
                         cp_temp = 'Error'
                     else:
                         assert(pos.isdigit())
                         if evalue is None:
                             cp_temp == '--'
                         elif evalue <= args.evalue_co:
-                            cp_temp = 'Yes' if alignment_data[p['id']][organism].conserved_at_position(int(pos)) else 'No'
+                            cp_temp = 'Yes' if alignment_data[p[args.id_col]][organism].conserved_at_position(int(pos)) else 'No'
                     conserved_temp.append(cp_temp)
 
-                peptides[i][str(organism) + '_conserved'] = RESIDUE_SEP.join(conserved_temp)
+                input_file.set_peptide_value(i, '{}_conserved'.format(str(organism)), RESIDUE_SEP.join(conserved_temp))
 
                 # for comparative organism analyze Uniprot entry of best blast hit
                 if organism == args.defined_organism.lower():
                     org_dict_temp = {x: '' for x in ['id', 'evalue', 'description', 'position', 'function']}
 
-                    id_temp = alignment_data[p['id']][organism].get_best_id()
+                    id_temp = alignment_data[p[args.id_col]][organism].get_best_id()
                     org_dict_temp['id'] = id_temp
-                    org_dict_temp['description'] = alignment_data[p['id']][organism].get_best_description()
+                    org_dict_temp['description'] = alignment_data[p[args.id_col]][organism].get_best_description()
                     if id_temp != '':
-                        org_dict_temp['evalue'] = alignment_data[p['id']][organism].get_best_evalue()
+                        org_dict_temp['evalue'] = alignment_data[p[args.id_col]][organism].get_best_evalue()
                         if org_dict_temp['evalue'] <= args.evalue_co:
 
                             positions_temp = list()
                             functions_temp = list()
                             for pos in p['position'].split(RESIDUE_SEP):
-                                homolog_position = None if not pos.isdigit() else alignment_data[p['id']][organism].alignment_at_position(int(pos))[1]
+                                homolog_position = None if not pos.isdigit() else alignment_data[p[args.id_col]][organism].alignment_at_position(int(pos))[1]
                                 if homolog_position is None:
                                     homolog_position = 0
                                 positions_temp.append(str(homolog_position))
@@ -214,22 +185,16 @@ def main():
                             if len(functions_temp) == 1:
                                 org_dict_temp['function'] = functions_temp[0]
                             else:
-                                org_dict_temp['function'] = FXN_SEP.join(['{}:{}'.format(p,s) for p, s in zip(positions_temp,
+                                org_dict_temp['function'] = FXN_SEP.join(['{}:{}'.format(p, s) for p, s in zip(positions_temp,
                                                                                                               functions_temp)])
 
                     # add alignment data to peptides
                     for k, v in org_dict_temp.items():
                         key_temp = '{}_{}'.format(args.defined_organism, k)
-                        peptides[i][key_temp] = v
+                        input_file.set_peptide_value(i, key_temp, v)
 
     # file output
-    with open(args.ofname, 'w') as outF:
-        outF.write(MSParser.output(header[0], organism_list, args.defined_organism))
-        for cysteine in cysteines:
-            outF.write(MSParser.output(cysteine, organism_list, args.defined_organism))
-            for peptide in peptides:
-                if peptide['index'].strip() == cysteine['index'].strip():
-                    outF.write(MSParser.output(peptide, organism_list, args.defined_organism))
+    input_file.write(args.ofname)
     sys.stdout.write('\nResults written to {}\n\n'.format(args.ofname))
 
 

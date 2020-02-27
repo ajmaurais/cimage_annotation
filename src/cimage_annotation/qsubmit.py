@@ -4,6 +4,7 @@ import os
 import argparse
 import subprocess
 import os.path
+from math import ceil
 
 from .submodules import parent_parser
 
@@ -27,12 +28,6 @@ def makePBS(mem, ppn, walltime, wd, cimage_annotation_args):
     return pbsName
 
 
-def getPlurality(num):
-    if num > 1:
-        return 's'
-    else: return ''
-
-
 def main():
 
     parser = argparse.ArgumentParser(prog='qsub_cimage_annotation', parents=[parent_parser.PARENT_PARSER],
@@ -54,6 +49,15 @@ def main():
     args = parser.parse_args()
     parent_args = parent_parser.PARENT_PARSER.parse_known_args()[0]
 
+    # calc nThread
+    if args.parallel and args.nThread is None:
+        _nThread = args.ppn * 2
+    elif not args.parallel and args.nThread is None:
+        _nThread=1
+    else:
+        _nThread = args.nThread
+        args.ppn = ceil(args.nThread / 2) * 2
+
     # Manually check args
     n_arg_errors = 0
     error_message = '\nThere were errors in the options you specified...'
@@ -68,13 +72,16 @@ def main():
         sys.stderr.write(error_message)
         return -1
 
-    sys.stdout.write('\nRequested job with {} processor{} and {}gb of memory...\n'.format(args.ppn, getPlurality(args.ppn),
-                                                                                          args.mem))
+    sys.stdout.write('\nRequested job with {} processor and {}gb of memory...\n'.format(args.ppn, args.mem))
     #get wd
     wd = os.path.dirname(os.path.abspath(args.input_file))
 
     cimage_annotation_args = {arg: getattr(args, arg) for arg in vars(parent_args)}
-    cimage_annotation_args['nThread'] = args.ppn * 2
+    cimage_annotation_args['nThread'] = _nThread
+    cimage_annotation_args['align'] = '' if args.align else None
+    cimage_annotation_args['verbose'] = '' if args.verbose else None
+    cimage_annotation_args['write_seq'] = '' if args.write_seq else None
+
     pbsName = makePBS(args.mem, args.ppn, args.walltime, wd, cimage_annotation_args)
     command = 'qsub {}'.format(pbsName)
     if args.verbose:

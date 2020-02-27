@@ -4,22 +4,23 @@ import re
 import xml.etree.ElementTree as ET
 from multiprocessing import Pool
 from multiprocessing import cpu_count
-import itertools
-from tqdm import tqdm
 import functools
 from math import ceil
+from tqdm import tqdm
 
 from .Blast import blastp
 
+# List of organisms for conservation analysis
+organism_list = ['human', 'mouse', 'fly', 'yeast', 'mustard', 'worms']
 
-class Alignment(object):
+class Alignment():
     '''
     Read BLAST XML file and provide methods to access underlying alignment data.
     '''
 
     _XML_HEADER_ELEMENTS = {'query_length': './BlastOutput_iterations/Iteration/Iteration_query-len',
-                           'query_description': './BlastOutput_iterations/Iteration/Iteration_query-def',
-                           'query_id': './BlastOutput_iterations/Iteration/Iteration_query-ID'}
+                            'query_description': './BlastOutput_iterations/Iteration/Iteration_query-def',
+                            'query_id': './BlastOutput_iterations/Iteration/Iteration_query-ID'}
 
     _XML_HITS_PATH = './BlastOutput_iterations/Iteration/Iteration_hits/Hit'
     _XML_HSP_PATH = 'Hit_hsps/Hsp/'
@@ -33,17 +34,17 @@ class Alignment(object):
     _VERBOSE = False
 
     _XML_MATCH_ELEMENTS = {'match_num': 'Hit_num',
-                          'query_from': 'Hit_hsps/Hsp/Hsp_query-from',
-                          'query_to': 'Hit_hsps/Hsp/Hsp_query-to',
-                          'match_id': 'Hit_accession',
-                          'match_description': 'Hit_def',
-                          'match_evalue': 'Hit_hsps/Hsp/Hsp_evalue',
-                          'match_from': 'Hit_hsps/Hsp/Hsp_hit-from',
-                          'match_to': 'Hit_hsps/Hsp/Hsp_hit-to',
-                          'match_length': 'Hit_hsps/Hsp/Hsp_align-len'}
+                           'query_from': 'Hit_hsps/Hsp/Hsp_query-from',
+                           'query_to': 'Hit_hsps/Hsp/Hsp_query-to',
+                           'match_id': 'Hit_accession',
+                           'match_description': 'Hit_def',
+                           'match_evalue': 'Hit_hsps/Hsp/Hsp_evalue',
+                           'match_from': 'Hit_hsps/Hsp/Hsp_hit-from',
+                           'match_to': 'Hit_hsps/Hsp/Hsp_hit-to',
+                           'match_length': 'Hit_hsps/Hsp/Hsp_align-len'}
 
 
-    def __init__(self, raw_xml, query_id=None, query_description=None, query_organism=None) :
+    def __init__(self, raw_xml, query_id=None, query_description=None, query_organism=None):
         '''
         Default constructor
 
@@ -82,7 +83,7 @@ class Alignment(object):
             self._empty = True
 
 
-    def _add_text_to_path(self, path, text, error_level = 0):
+    def _add_text_to_path(self, path, text, error_level=0):
         '''
         Add path to element in self._tree
 
@@ -153,10 +154,10 @@ class Alignment(object):
 
 
     def _populate_hsp(self):
-        self._hsp = {x.tag: x.text for x in self._best_hit.findall(self._XML_HSP_PATH)}
+        self._hsp={x.tag: x.text for x in self._best_hit.findall(self._XML_HSP_PATH)}
 
         self._hsp['hit_seq_map'] = list()
-        seq_index = 0
+        seq_index=0
         for i, c in enumerate(self._hsp[self._XML_HIT_SEQ_NAME]):
             self._hsp['hit_seq_map'].append(seq_index)
             if re.match('[A-Za-z]', c):
@@ -323,24 +324,24 @@ class Alignment(object):
                         outF.write('\n')
 
             elif file_format == 'xml':
-                outF.write(ET.totexting(self._tree, encoding='unicode'))
+                outF.write(ET.totexting(self._tree, encoding = 'unicode'))
                 if mode == 'a':
                     outF.write('\n')
             else:
                 raise RuntimeError('{} is an unknown file_format!'.format(file_format))
 
 
-def _blastp_worker(search_item, db = None, verbose=False):
+def _blastp_worker(search_item, db=None, verbose=False):
     query = search_item[3]
-    return_code, dat = blastp(search_item[1], db, query, verbose=verbose)
+    return_code, dat = blastp(search_item[1], db, query, verbose = verbose)
     return dat
 
 
-def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=True, verbose=False):
+def align_all(unique_ids, sequences, db_path, organisms, nThread=None, show_bar=True, verbose=False):
 
     #construct list to pass to blastp worker
     search_list = list()
-    for id in set([x['id'] for x in peptides]):
+    for id in unique_ids:
         for o in organisms:
             # search_list is tuple of (id, organisms, description, sequence)
             search_list.append((id, o, sequences[id][0], sequences[id][1]))
@@ -358,27 +359,27 @@ def align_all(peptides, sequences, db_path, organisms, nThread=None, show_bar=Tr
     results = list()
     if show_bar:
         with Pool(processes=_nThread) as pool:
-            results = list(tqdm(pool.imap(functools.partial(_blastp_worker, db = db_path, verbose=verbose),
+            results = list(tqdm(pool.imap(functools.partial(_blastp_worker, db=db_path, verbose=verbose),
                                           search_list),
-                                          total = listLen,
+                                          total=listLen,
                                           miniters=1,
-                                          file = sys.stdout))
+                                          file=sys.stdout))
     else:
         length = len(search_list)
         for i, it in enumerate(search_list):
             sys.stdout.write('Working on {} of {}'.format(i, length))
             results.append(_blastp_worker(it, db=db_path, verbose=verbose))
 
-    assert(len(search_list) == len(results))
+    assert len(search_list) == len(results)
 
-    ret=dict()
+    ret = dict()
     Alignment._VERBOSE = verbose
     for sl, r in zip(search_list, results):
         if sl[0] not in ret:
-            ret[sl[0]]=dict()
-        ret[sl[0]][sl[1]]=Alignment(r, query_id=sl[0],
-                                    query_description=sl[2],
-                                    query_organism=sl[1])
+            ret[sl[0]] = dict()
+        ret[sl[0]][sl[1]] = Alignment(r, query_id=sl[0],
+                                      query_description=sl[2],
+                                      query_organism=sl[1])
 
     return ret
 
