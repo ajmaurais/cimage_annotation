@@ -44,7 +44,7 @@ class Cimage_file():
     def __init__(self):
         self.fname = str()
         self.peptides = list()
-        self.cysteines = list()
+        self.residues = list()
         self.unique_ids = set()
         self.header = dict()
         self.defined_organism = str()
@@ -82,8 +82,8 @@ class Cimage_file():
         if line_dict['description'].strip() == 'description':
             line_dict['id'] = 'id'
             line_dict['protein_location'] = 'protein location'
-            line_dict['position'] = 'cysteine position'
-            line_dict['cys_function'] = 'cysteine function'
+            line_dict['position'] = 'residue position'
+            line_dict['res_function'] = 'residue function'
             line_dict[defined_organism + '_id'] = defined_organism + '_id'
             line_dict[defined_organism + '_evalue'] = defined_organism + '_evalue'
             line_dict[defined_organism + '_description'] = defined_organism + '_description'
@@ -95,7 +95,7 @@ class Cimage_file():
         else:
             line_dict['protein_location'] = ''
             line_dict['position'] = ''
-            line_dict['cys_function'] = ''
+            line_dict['res_function'] = ''
             line_dict[defined_organism + '_id'] = ''
             line_dict[defined_organism + '_evalue'] = ''
             line_dict[defined_organism + '_description'] = ''
@@ -131,7 +131,7 @@ class Cimage_file():
 
             elif line_dict['index'].strip() != '':  # create peptide lines (no protein information - includes overall ratio)
                 index_temp = line_dict['index'].strip()
-                self.cysteines.append(line_dict)
+                self.residues.append(line_dict)
             else:
                 self.peptides.append(line_dict)
                 self.peptides[-1]['index'] = index_temp
@@ -171,10 +171,10 @@ class Cimage_file():
 
         with open(fname, 'w') as outF:
             self._write_line(outF, self.header, self.defined_organism)
-            for cysteine in self.cysteines:
-                self._write_line(outF, cysteine, self.defined_organism)
+            for residue in self.residues:
+                self._write_line(outF, residue, self.defined_organism)
                 for peptide in self.peptides:
-                    if peptide['index'].strip() == cysteine['index'].strip():
+                    if peptide['index'].strip() == residue['index'].strip():
                         self._write_line(outF, peptide, self.defined_organism)
 
 class Tsv_file():

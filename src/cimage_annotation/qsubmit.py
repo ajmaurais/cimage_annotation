@@ -4,7 +4,6 @@ import os
 import argparse
 import subprocess
 import os.path
-from math import ceil
 
 from .submodules import parent_parser
 
@@ -50,13 +49,7 @@ def main():
     parent_args = parent_parser.PARENT_PARSER.parse_known_args()[0]
 
     # calc nThread
-    if args.parallel and args.nThread is None:
-        _nThread = args.ppn * 2
-    elif not args.parallel and args.nThread is None:
-        _nThread=1
-    else:
-        _nThread = args.nThread
-        args.ppn = ceil(args.nThread / 2) * 2
+    _nThread = args.ppn * 2
 
     # Manually check args
     n_arg_errors = 0
@@ -66,7 +59,7 @@ def main():
                                                                                                  os.path.abspath(args.input_file))
         n_arg_errors += 1
     if args.align and args.database_dir is None:
-        error_message += '\n\t--database_dir must be specified when --align 1 is set\n'
+        error_message += '\n\t--database_dir must be specified when --align is set\n'
         n_arg_errors += 1
     if n_arg_errors > 0:
         sys.stderr.write(error_message)
