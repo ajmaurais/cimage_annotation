@@ -204,7 +204,7 @@ class Tsv_file():
         return self.dat.iterrows()
 
     def write(self, fname):
-        self.dat.to_csv(fname)
+        self.dat.to_tsv(fname)
 
     def set_peptide_value(self, index, key, value):
         self.dat[key][index] = value

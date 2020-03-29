@@ -7,7 +7,7 @@ from multiprocessing.pool import ThreadPool as Pool
 from multiprocessing import cpu_count
 from tqdm import tqdm
 import functools
-from Bio import ExPASy, SeqIO, SwissProt
+from Bio import ExPASy, SwissProt
 
 
 features_list = ['CA_BIND', 'ZN_FING', 'DNA_BIND', 'NP_BIND',
