@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 setup(name='cimage_annotation',
-      version='2.0.0',
+      version='2.1.0',
       description='Add cysteine functional annotation to cimage output.',
       author='Dan Bak, Aaron Maurais',
       url='https://github.com/ajmaurais/cimage_annotation',
@@ -18,7 +18,7 @@ setup(name='cimage_annotation',
       packages=find_packages(where='src'),
       python_requires='>=3.6.*',
       install_requires=['biopython==1.77.dev0', 'tqdm'],
-      dependency_links=['https://github.com/ajmaurais/biopython/tarball/swissprot_bugfix#egg=package-1.0'],
+      dependency_links=['https://github.com/ajmaurais/biopython#egg=biopython-1.77.dev0'],
       entry_points={'console_scripts': ['cimage_annotation=cimage_annotation:main', 'qsub_cimage_annotation=cimage_annotation:qsubmit_main']},
 )
 
