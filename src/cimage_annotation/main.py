@@ -4,7 +4,7 @@ import argparse
 import re
 from multiprocessing import cpu_count
 
-from .submodules import MSParser, UniProt, Alignments, Fasta, parent_parser
+from .submodules import MSParser, UniProt, Alignments, fasta, parent_parser
 
 PROG_VERSION = 2.0
 SEQ_PATH = 'sequences.fasta'
@@ -100,7 +100,7 @@ def main():
 
         if args.write_seq:
             if p[args.id_col] not in sequences: #only write sequence if it is not currently in file
-                Fasta.write_fasta_entry(SEQ_PATH,
+                fasta.write_fasta_entry(SEQ_PATH,
                                         p[args.id_col],
                                         UniProt_data[3],
                                         description=p['description'],
