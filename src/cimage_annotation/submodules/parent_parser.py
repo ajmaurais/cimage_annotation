@@ -8,15 +8,15 @@ PARENT_PARSER.add_argument('-f', '--file_type', default='cimage', choices=['cima
                                  'For tsv format, there must be columns for protein ID and peptide sequence.')
 
 PARENT_PARSER.add_argument('--id_col', default='id',
-                           help='Specify the columm header containing protein Uniprot IDs for tsv input. '
+                           help='Specify the column header containing protein Uniprot IDs for tsv input. '
                                 '"id" is the default.')
 
 PARENT_PARSER.add_argument('--seq_col', default='sequence',
-                           help='Specify the columm header containing peptide sequences for tsv input. '
+                           help='Specify the column header containing peptide sequences for tsv input. '
                                 '"sequence" is the default.')
 
 PARENT_PARSER.add_argument('--description_col', default='description',
-                           help='Specify the columm header containing protein descriptions for tsv input. '
+                           help='Specify the column header containing protein descriptions for tsv input. '
                                 'Only required for query description in alignment output files. '
                                 '"description" is the default.')
 
@@ -31,7 +31,7 @@ PARENT_PARSER.add_argument('--ofname', default='residue_annotation.tsv',
                            help='Name of file to write results to.')
 
 PARENT_PARSER.add_argument('-a', '--align', action='store_true', default=False,
-                           help='Choose whether to balast protein sequences to determine residue conservation. '
+                           help='Choose whether to blast protein sequences to determine residue conservation. '
                                 'If this option is specified, a database dir must also be specified with the --database_dir option. '
                                 '0 is the default.')
 
@@ -40,11 +40,11 @@ PARENT_PARSER.add_argument('-w', '--write_alignment_data', action='store_true', 
                                 '0 is the default.')
 
 PARENT_PARSER.add_argument('--align_format', choices=['xml', 'txt'], default='txt',
-                           help='Alignment file format. xml is BLAST XML format, sutible for programming, '
+                           help='Alignment file format. xml is BLAST XML format, suitable for programming, '
                            'txt is human readable.')
 
 PARENT_PARSER.add_argument('--evalue_co', default=1e-5, type=float,
-                           help='Alignment evalue cuttoff for a residue to be considered conserved. 1e-5 is the default.')
+                           help='Alignment e-value cutoff for a residue to be considered conserved. 1e-5 is the default.')
 
 PARENT_PARSER.add_argument('-d', '--database_dir', type=str,
                            help='Path to directory containing sequence databases to use for alignment.')

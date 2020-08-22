@@ -96,7 +96,8 @@ def main():
 
         input_file.set_peptide_value(i, 'position', UniProt_data[1])   # cysteine position
         input_file.set_peptide_value(i, 'res_function', UniProt_data[2]) # cysteine function (if known)
-        input_file.set_peptide_value(i, 'protein_location', UniProt_data[4]) # protein subcellular localization (if known)
+        input_file.set_peptide_value(i, 'domains', UniProt_data[3]) # Domain at position (if known)
+        input_file.set_peptide_value(i, 'protein_location', UniProt_data[5]) # protein subcellular localization (if known)
 
         if args.write_seq:
             if p[args.id_col] not in sequences: #only write sequence if it is not currently in file

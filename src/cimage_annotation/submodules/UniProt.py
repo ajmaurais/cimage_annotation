@@ -168,8 +168,13 @@ def res_features(record, position, all_features=False):
     '''
 
     ret = ''
+    domains = ''
     for feature in record.features:
         try:
+            if feature.type.upper() == 'DOMAIN' and \
+                 str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
+                 int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
+                     domains += (str(feature.type) + '--' + str(feature.qualifiers) + ' || ')
             if all_features:
                 if str(feature.location.start)[0] != '?' and str(feature.location.end)[0] != '?' and \
                    int(position) >= int(feature.location.start) and int(position) < int(feature.location.end):
@@ -188,7 +193,7 @@ def res_features(record, position, all_features=False):
         except TypeError as e:
             continue
 
-    return ret
+    return ret, domains
 
 
 def ExPasy(sequence, record, all_features=False, res_sep='|', fxn_sep='!', combine_method=1):
@@ -199,6 +204,7 @@ def ExPasy(sequence, record, all_features=False, res_sep='|', fxn_sep='!', combi
     seq_no_mod = sequence.replace('*', '')
     position = ''
     function = ''
+    domain = ''
     organism = ''
     full_sequence = ''
     pro_location = ''
@@ -210,6 +216,7 @@ def ExPasy(sequence, record, all_features=False, res_sep='|', fxn_sep='!', combi
 
         positions = list()
         functions = list()
+        domains = list()
         for i, x in enumerate(re.finditer('\*', sequence)):
             mod_loc = x.start()-(i+1)
             cys_pos = cys_position(full_sequence, seq_no_mod, mod_loc)
@@ -217,13 +224,17 @@ def ExPasy(sequence, record, all_features=False, res_sep='|', fxn_sep='!', combi
                 positions.append('RESIDUE_NOT_FOUND')
             else:
                 positions.append(str(cys_pos + 1)) # convert to 1 based indexing here
-                functions.append(res_features(record, cys_pos, all_features=all_features))
+                functions_t, domains_t = res_features(record, cys_pos, all_features=all_features)
+                functions.append(functions_t)
+                domains.append(domains_t)
 
         position = res_sep.join(positions)
         if ''.join(functions):
             function = functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p, s) for p, s in zip(positions, functions)])
+        if ''.join(domains):
+            domain = domains[0] if len(domains) == 1 else fxn_sep.join(['{}:{}'.format(p, s) for p, s in zip(positions, domains)])
 
     else:
         position = 'BAD_ID'
-    return organism, position, function, full_sequence, pro_location
+    return organism, position, function, domain, full_sequence, pro_location
 
