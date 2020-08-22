@@ -195,6 +195,12 @@ def res_features(record, position, all_features=False):
 
     return ret, domains
 
+def parse_domains(domain_s):
+    ret = ''
+    m = re.findall(r'\'note\': \'([\w\s\-_]+)\'', domain_s)
+    if m:
+        ret = '|'.join(set(m))
+    return ret
 
 def ExPasy(sequence, record, all_features=False, res_sep='|', fxn_sep='!', combine_method=1):
 
@@ -233,6 +239,7 @@ def ExPasy(sequence, record, all_features=False, res_sep='|', fxn_sep='!', combi
             function = functions[0] if len(functions) == 1 else fxn_sep.join(['{}:{}'.format(p, s) for p, s in zip(positions, functions)])
         if ''.join(domains):
             domain = domains[0] if len(domains) == 1 else fxn_sep.join(['{}:{}'.format(p, s) for p, s in zip(positions, domains)])
+            domain = parse_domains(domain)
 
     else:
         position = 'BAD_ID'
