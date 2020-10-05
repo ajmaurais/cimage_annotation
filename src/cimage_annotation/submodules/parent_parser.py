@@ -32,8 +32,7 @@ PARENT_PARSER.add_argument('--ofname', default='residue_annotation.tsv',
 
 PARENT_PARSER.add_argument('-a', '--align', action='store_true', default=False,
                            help='Choose whether to blast protein sequences to determine residue conservation. '
-                                'If this option is specified, a database dir must also be specified with the --database_dir option. '
-                                '0 is the default.')
+                                'If this option is specified, a database dir must also be specified with the --database_dir option.')
 
 PARENT_PARSER.add_argument('-w', '--write_alignment_data', action='store_true', default=False,
                            help='Choose whether to write alignment data. '
