@@ -6,7 +6,7 @@ from multiprocessing import cpu_count
 
 from .submodules import MSParser, UniProt, Alignments, fasta, parent_parser
 
-PROG_VERSION = 2.0
+PROG_VERSION = 2.1
 SEQ_PATH = 'sequences.fasta'
 FXN_SEP = '!'
 RESIDUE_SEP = '|'
@@ -20,7 +20,7 @@ def read_input(args):
     elif args.file_type == 'dtaselect':
         ret = MSParser.Dtaselect()
     else:
-        raise RuntimeError('{} is an unknown input file_type'.format(file_type))
+        raise RuntimeError('{} is an unknown input file_type'.format(args.file_type))
 
     ret.read(args.input_file, args.defined_organism)
     return ret

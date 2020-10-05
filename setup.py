@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 setup(name='cimage_annotation',
-      version='2.1.0',
+      version='2.1.1',
       description='Add cysteine functional annotation to cimage output.',
       author='Dan Bak, Aaron Maurais',
       url='https://github.com/ajmaurais/cimage_annotation',

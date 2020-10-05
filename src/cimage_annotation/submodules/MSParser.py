@@ -2,7 +2,7 @@
 from .Alignments import organism_list
 from .dataframe import DataFrame, read_tsv
 
-PRINT_COLS=['index', 'id', 'symbol', 'description', 'protein_location', 'sequence', 'mass', 'position', 'res_function']
+PRINT_COLS=['index', 'id', 'symbol', 'description', 'protein_location', 'sequence', 'mass', 'position', 'res_function', 'domains']
 ALLIGNMENT_COLUMNS = ['id', 'evalue', 'description', 'position', 'function']
 ADDED_COLUMNS = ['position', 'res_function', 'domains', 'protein_location']
 
@@ -84,6 +84,7 @@ class Cimage_file():
             line_dict['protein_location'] = 'protein location'
             line_dict['position'] = 'residue position'
             line_dict['res_function'] = 'residue function'
+            line_dict['domains'] = 'domains'
             line_dict[defined_organism + '_id'] = defined_organism + '_id'
             line_dict[defined_organism + '_evalue'] = defined_organism + '_evalue'
             line_dict[defined_organism + '_description'] = defined_organism + '_description'
@@ -96,6 +97,7 @@ class Cimage_file():
             line_dict['protein_location'] = ''
             line_dict['position'] = ''
             line_dict['res_function'] = ''
+            line_dict['domains'] = ''
             line_dict[defined_organism + '_id'] = ''
             line_dict[defined_organism + '_evalue'] = ''
             line_dict[defined_organism + '_description'] = ''
@@ -149,9 +151,10 @@ class Cimage_file():
         outF.write('\t'.join([str(line_dict['{}_{}'.format(defined_organism, x)]) for x in ALLIGNMENT_COLUMNS]))
 
         n = 1
-        while n < (len(line_dict) - 19):
-            outF.write(('\t{}'.format(line_dict[n])))
+        while n < (len(line_dict) - 20):
+            outF.write(('\t{}'.format(line_dict[n].strip())))
             n += 1
+        outF.write('\n')
 
 
     def write(self, fname):
