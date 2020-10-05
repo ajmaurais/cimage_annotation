@@ -107,7 +107,7 @@ def main():
                                         description=p['description'],
                                         append=seq_written)
                 seq_written = True
-        sequences[p[args.id_col]] = ('' if args.description_col not in p else p[args.description_col], UniProt_data[3])
+        sequences[p[args.id_col]] = ('' if args.description_col not in p else p[args.description_col], UniProt_data[4])
 
     # Replace alignment files with empty string so they won't be continuously appended to.
     if args.write_alignment_data and args.align:
@@ -188,7 +188,7 @@ def main():
                                 else:
                                     functions_temp.append(UniProt.res_features(org_record_dict[id_temp],
                                                                                homolog_position - 1,
-                                                                               all_features=args.all_features))
+                                                                               all_features=args.all_features)[0])
 
                         org_dict_temp['position'] = RESIDUE_SEP.join(positions_temp)
                         if ''.join(functions_temp):
