@@ -7,7 +7,7 @@ ALLIGNMENT_COLUMNS = ['id', 'evalue', 'description', 'position', 'function']
 ADDED_COLUMNS = ['position', 'res_function', 'domains', 'protein_location']
 
 '''
-This file implements containers for various input file formats.
+This file implements interfaces for various input file formats.
 In order to be a valid input file container, the class must implement the
 folowing members.
 
