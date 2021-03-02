@@ -38,21 +38,21 @@ Optionally, you can also align cysteine sites to other organisms to determine wh
 qsub_cimage_annotation --align --database_dir <path_to_dir_with_sequence_databases> -g <input_file>
 ```
 
-# How to install on Pleiades
+# How to install on Sirius
 
-1\. First clone the `cimage_annotation` GitHub repository. You can store the `cimage_annotation` source code anywhere on your `pleiades` account. However, the installation instructions assume the program is being installed in `~/local`. 
+1\. First clone the `cimage_annotation` GitHub repository. You can store the `cimage_annotation` source code anywhere on your `sirius` account. However, the installation instructions assume the program is being installed in `~/code`. 
 
 ```bash
-mkdir -p ~/local # make ~/local if it doesn't already exist
-cd ~/local # navigate to ~/local
+mkdir -p ~/code # make ~/code if it doesn't already exist
+cd ~/code # navigate to ~/code
 git clone https://github.com/ajmaurais/cimage_annotation # clone the GitHub repository
 ```
 
 2\. Next, setup a python virtual environment in which to install `cimage_annotation` and its dependencies. `cimage_annotation` is written for `python >= 3.6.*` so you will first need to load the `python3` module.
 
 ```bash
-cd ~/local/cimage_annotation # navigate to the cimage_annotation directory
-module load python/3.6.1 # load the module
+cd ~/code/cimage_annotation # navigate to the cimage_annotation directory
+module load python/3.6.3 # load the module
 python3 -m venv venv # set up the python virtual environment
 ```
 
@@ -63,30 +63,20 @@ README.md  setup.py  src/  venv/
 ```
 If you are missing the `venv` directory, something went wrong and the following commands will not work.
 
-3\. There is a bug in `biopython` 1.6.1, one of the dependencies for `cimage_annotation`, which will cause an error if it is used. Therefore, you must manually install `biopython` from a fork of the main `biopython` GitHub repository, in which the bug has been fixed. The build and install steps should produce a lot of output and take several seconds to finish.
+3\. Next, build and install `cimage_annotation` in your virtual environment.
 
 ```bash
-cd ~/local
-git clone --single-branch --branch master https://github.com/ajmaurais/biopython # Clone the biopython repo
-cd biopython # Navigate to the biopython directory
-~/local/cimage_annotation/venv/bin/python setup.py build # Run the biopython build script
-~/local/cimage_annotation/venv/bin/pip install . # Install biopython in your virtual environment
-```
-
-4\. Next, build and install `cimage_annotation` in your virtual environment.
-
-```bash
-cd ~/local/cimage_annotation
+cd ~/code/cimage_annotation
 ./venv/bin/python setup.py build
 ./venv/bin/pip install .
 ```
 
-5\. Add `cimage_annotation` to your `$PATH` (optional)
+4\. Add `cimage_annotation` to your `$PATH` (optional)
 
 ```bash
 mkdir -p ~/bin
-ln -s ~/local/cimage_annotation/venv/bin/cimage_annotation ~/bin
-ln -s ~/local/cimage_annotation/venv/bin/qsub_cimage_annotation ~/bin
+cp --remove-destination ~/code/cimage_annotation/venv/bin/cimage_annotation ~/bin
+cp --remove-destination ~/code/cimage_annotation/venv/bin/qsub_cimage_annotation ~/bin
 ```
 
-6\. Log out and log back in to apply the changes to your shell environment. Once you log back in, check that the `cimage_annotation` command is recognized by your shell. Running the command `which cimage_annotation` should output: `~/bin/cimage_annotation`
+5\. Log out and log back in to apply the changes to your shell environment. Once you log back in, check that the `cimage_annotation` command is recognized by your shell. Running the command `which cimage_annotation` should output: `~/bin/cimage_annotation`

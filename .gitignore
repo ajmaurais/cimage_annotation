@@ -4,6 +4,7 @@ testFiles/
 databases/*
 databases
 README.html
+README.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
