@@ -17,8 +17,7 @@ setup(name='cimage_annotation',
       package_dir={'':'src'},
       packages=find_packages(where='src'),
       python_requires='>=3.6.*',
-      install_requires=['biopython==1.77.dev0', 'tqdm'],
-      dependency_links=['https://github.com/ajmaurais/biopython#egg=biopython-1.77.dev0'],
+      install_requires=['biopython==1.78', 'tqdm'],
       entry_points={'console_scripts': ['cimage_annotation=cimage_annotation:main', 'qsub_cimage_annotation=cimage_annotation:qsubmit_main']},
 )
 
