@@ -73,7 +73,7 @@ cd ~/code/cimage_annotation
 
 4\. Install `blastp` (optional).
 
-If you want to use the `--align` option, you will need to install a local copy because there is no module for it on sirius.
+If you want to use the `--align` option, you will need to install a local copy of `blastp` because there is no module for it on sirius.
 
 ```bash
 mkdir -p ~/code/blast ~/bin
