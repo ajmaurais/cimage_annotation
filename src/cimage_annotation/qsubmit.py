@@ -7,8 +7,8 @@ import os.path
 
 from .submodules import parent_parser
 
-BLAST_PBS_VERSION = 'blast'
-PBS_MODULE_LOAD_COMMAND = 'module load'
+# BLAST_PBS_VERSION = 'blast'
+# PBS_MODULE_LOAD_COMMAND = 'module load'
 CIMAGE_ANNOTATION_EXE = 'cimage_annotation'
 
 def makePBS(mem, ppn, walltime, wd, cimage_annotation_args):
@@ -19,7 +19,7 @@ def makePBS(mem, ppn, walltime, wd, cimage_annotation_args):
     with open(pbsName, 'w') as outF:
         outF.write("#!/bin/tcsh\n")
         outF.write('#PBS -l mem={}gb,nodes=1:ppn={},walltime={}\n\n'.format(mem, ppn, walltime))
-        outF.write('{} {}\n\n'.format(PBS_MODULE_LOAD_COMMAND, BLAST_PBS_VERSION))
+        # outF.write('{} {}\n\n'.format(PBS_MODULE_LOAD_COMMAND, BLAST_PBS_VERSION))
         outF.write('cd {}\n'.format(wd))
         outF.write('{} {} {} > stdout.txt\n'.format(CIMAGE_ANNOTATION_EXE, _flags, cimage_annotation_args['input_file']))
 
