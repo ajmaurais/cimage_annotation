@@ -9,7 +9,7 @@ ADDED_COLUMNS = ['position', 'res_function', 'domains', 'protein_location']
 '''
 This file implements interfaces for various input file formats.
 In order to be a valid input file container, the class must implement the
-folowing members.
+following members.
 
 Input/output
 ------------
@@ -18,7 +18,7 @@ read(fname, defined_organism):
 write(fname):
     write formated output file.
 
-Data acess
+Data access
 ----------
 __len__():
     Return number of peptides (or rows).
