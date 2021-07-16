@@ -71,7 +71,19 @@ cd ~/code/cimage_annotation
 ./venv/bin/pip install .
 ```
 
-4\. Add `cimage_annotation` to your `$PATH` (optional)
+4\. Install `blastp` (optional).
+
+If you want to use the `--align` option, you will need to install a local copy of `blastp` because there is no module for it on sirius.
+
+```bash
+mkdir -p ~/code/blast ~/bin
+cd ~/code/blast
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.10.0/ncbi-blast-2.10.0+-x64-linux.tar.gz
+tar -xvf ncbi-blast-2.10.0+-x64-linux.tar.gz
+cp ~/code/blast/ncbi-blast-2.10.0+/bin/blastp ~/bin
+```
+
+5\. Add `cimage_annotation` to your `$PATH` (optional)
 
 ```bash
 mkdir -p ~/bin
@@ -79,4 +91,4 @@ cp --remove-destination ~/code/cimage_annotation/venv/bin/cimage_annotation ~/bi
 cp --remove-destination ~/code/cimage_annotation/venv/bin/qsub_cimage_annotation ~/bin
 ```
 
-5\. Log out and log back in to apply the changes to your shell environment. Once you log back in, check that the `cimage_annotation` command is recognized by your shell. Running the command `which cimage_annotation` should output: `~/bin/cimage_annotation`
+6\. Log out and log back in to apply the changes to your shell environment. Once you log back in, check that the `cimage_annotation` command is recognized by your shell. Running the command `which cimage_annotation` should output: `~/bin/cimage_annotation`
